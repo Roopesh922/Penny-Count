@@ -55,10 +55,7 @@ export const UsersManagement: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [usersData, linesData] = await Promise.all([
-        dataService.getUsers(),
-        dataService.getLines()
-      ]);
+      const usersData = await dataService.getUsers();
 
       if (currentUser?.role === 'owner') {
         // Owners see all agents and co-owners they added
@@ -69,13 +66,9 @@ export const UsersManagement: React.FC = () => {
         );
         setUsers(filtered);
       } else if (currentUser?.role === 'co-owner') {
-        // Co-owners see only agents assigned to their lines
-        const coOwnerLines = linesData.filter((l: any) => l.co_owner_id === currentUser.id);
-        const agentIds = coOwnerLines.map((l: any) => l.agent_id).filter(Boolean);
-
+        // Co-owners see only agents assigned to their lines (RLS handles this)
         const filtered = usersData.filter((u: User) =>
           u.role === 'agent' &&
-          agentIds.includes(u.id) &&
           u.approvalStatus !== 'rejected'
         );
         setUsers(filtered);

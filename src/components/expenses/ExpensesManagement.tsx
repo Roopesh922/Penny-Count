@@ -53,29 +53,20 @@ export const ExpensesManagement: React.FC = () => {
         user?.role === 'owner' || user?.role === 'co-owner' ? dataService.getUsers() : Promise.resolve([])
       ]);
 
-      let filteredExpenses = expensesData;
-
+      // RLS policies handle filtering, so we just use what's returned
       if (user?.role === 'owner') {
-        // Owners see only expenses from agents/co-owners they added
+        // Filter agents for dropdown
         const ownedAgents = usersData.filter((u: any) =>
           (u.role === 'agent' || u.role === 'co-owner') && u.addedBy === user.id
         );
-        const agentIds = ownedAgents.map((a: any) => a.id);
-
-        filteredExpenses = expensesData.filter((e: any) => agentIds.includes(e.submittedBy));
         setAgents(ownedAgents);
       } else if (user?.role === 'co-owner') {
-        // Co-owners see only expenses from agents assigned to their lines
-        const coOwnerLines = linesData.filter((l: any) => l.co_owner_id === user.id);
-        const agentIds = coOwnerLines.map((l: any) => l.agent_id).filter(Boolean);
-
-        filteredExpenses = expensesData.filter((e: any) => agentIds.includes(e.submittedBy));
-
-        // Set agents for dropdown
-        setAgents(usersData.filter((u: any) => agentIds.includes(u.id)));
+        // Set agents for dropdown - RLS already filters users
+        const agentUsers = usersData.filter((u: any) => u.role === 'agent');
+        setAgents(agentUsers);
       }
 
-      setExpenses(filteredExpenses);
+      setExpenses(expensesData);
       setCategories(categoriesData);
       setLines(linesData);
     } catch (error) {
