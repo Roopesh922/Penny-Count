@@ -50,11 +50,12 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const watchIdRef = useRef<number | null>(null);
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load tracking preference from localStorage
+  // Load tracking preference from localStorage and enable by default for agents
   useEffect(() => {
     if (user?.role === 'agent') {
       const savedTracking = localStorage.getItem(LOCATION_STORAGE_KEY);
-      if (savedTracking === 'true') {
+      // Enable tracking by default for agents (if not explicitly disabled)
+      if (savedTracking !== 'false') {
         startTracking();
       }
     }
@@ -84,6 +85,8 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           timestamp: position.timestamp
         };
         setCurrentLocation(location);
+        // Update location to server immediately when received
+        updateLocation(location);
       },
       (error) => {
         console.error('Error getting location:', error);
@@ -95,11 +98,21 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
     );
 
-    // Set up periodic updates to server
+    // Set up periodic updates to server (backup in case watchPosition doesn't trigger frequently enough)
     updateIntervalRef.current = setInterval(() => {
-      if (currentLocation) {
-        updateLocation(currentLocation);
-      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location: Location = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            timestamp: position.timestamp
+          };
+          updateLocation(location);
+        },
+        (error) => console.error('Error in periodic location update:', error),
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
     }, LOCATION_UPDATE_INTERVAL);
 
     setIsTracking(true);
