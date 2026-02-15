@@ -178,12 +178,13 @@ export const Collections: React.FC = () => {
 
   const handleSubmitCollection = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!user || !selectedLoan || !selectedTerm || isSubmitting) return;
+    if (!user || !selectedLoan || !selectedTerm) return;
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
     const collectionType = formData.get('collectionType') as 'paid' | 'missed';
-
-    setIsSubmitting(true);
 
     try {
       if (collectionType === 'paid') {

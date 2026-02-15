@@ -20,6 +20,7 @@ export const ExpensesManagement: React.FC = () => {
   const [lines, setLines] = useState<Line[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAgent, setSelectedAgent] = useState<string>('all');
@@ -79,6 +80,10 @@ export const ExpensesManagement: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
     try {
       const lineId = selectedLine ? selectedLine.id : formData.lineId;
 
@@ -119,6 +124,8 @@ export const ExpensesManagement: React.FC = () => {
       loadData();
     } catch (error) {
       console.error('Error creating expense:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -610,11 +617,12 @@ export const ExpensesManagement: React.FC = () => {
                   </button>
                   <motion.button
                     type="submit"
+                    disabled={isSubmitting}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="px-6 py-3 bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                    className="px-6 py-3 bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {t('recordExpense')}
+                    {isSubmitting ? 'Recording...' : t('recordExpense')}
                   </motion.button>
                 </div>
               </form>

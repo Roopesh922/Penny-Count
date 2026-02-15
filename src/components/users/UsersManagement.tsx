@@ -30,6 +30,7 @@ export const UsersManagement: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Add user modal state
   const [phoneSearch, setPhoneSearch] = useState('');
@@ -152,7 +153,8 @@ export const UsersManagement: React.FC = () => {
   const handleAddExistingUser = async () => {
     if (!searchedUser) return;
 
-    setLoading(true);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     setError(null);
 
     console.log('Attempting to add user to team:', {
@@ -180,14 +182,16 @@ export const UsersManagement: React.FC = () => {
       console.error('Error adding user to team:', error);
       setError(error.message || 'Error adding user');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     setError(null);
-    setLoading(true);
 
     try {
       // Create user with Supabase Auth
@@ -230,7 +234,7 @@ export const UsersManagement: React.FC = () => {
         setError(error.message || 'Error creating user');
       }
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -676,10 +680,10 @@ export const UsersManagement: React.FC = () => {
                     </div>
                     <button
                       onClick={handleAddExistingUser}
-                      disabled={loading}
-                      className="w-full px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
+                      disabled={isSubmitting}
+                      className="w-full px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Add to My Team
+                      {isSubmitting ? 'Adding...' : 'Add to My Team'}
                     </button>
                     <button
                       onClick={() => {
@@ -738,10 +742,10 @@ export const UsersManagement: React.FC = () => {
                     <div className="flex space-x-3">
                       <button
                         type="submit"
-                        disabled={loading}
-                        className="flex-1 px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-colors disabled:opacity-50"
+                        disabled={isSubmitting}
+                        className="flex-1 px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Create & Send OTP
+                        {isSubmitting ? 'Creating...' : 'Create & Send OTP'}
                       </button>
                       <button
                         type="button"

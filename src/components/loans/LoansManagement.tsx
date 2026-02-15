@@ -130,6 +130,7 @@ export const LoansManagement: React.FC = () => {
   const [borrowerMap, setBorrowerMap] = useState<{ [key: string]: string }>(emptyBorrowerMap);
   const { push: pushToast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [lines, setLines] = React.useState<any[]>([]);
 
@@ -205,9 +206,13 @@ export const LoansManagement: React.FC = () => {
 
   const handleCreateLoanSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
+      const formData = new FormData(e.currentTarget);
+
       const borrowerId = formData.get('borrowerId') as string;
 
       if (!borrowerId) {
@@ -252,6 +257,8 @@ export const LoansManagement: React.FC = () => {
     } catch (error) {
       console.error('Error creating loan:', error);
       pushToast({ type: 'error', message: (error as any)?.message || 'Failed to create loan' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -269,23 +276,26 @@ export const LoansManagement: React.FC = () => {
     e.preventDefault();
     if (!selectedLoan) return;
 
-    const formData = new FormData(e.currentTarget);
-    const amount = parseInt(formData.get('amount') as string);
-    const finalAmount = parseInt(formData.get('finalAmount') as string);
-    const tenureMonths = parseInt(formData.get('tenure') as string);
-
-    // Calculate monthly interest rate
-    const interestAmount = finalAmount - amount;
-    const monthlyInterestRate = (interestAmount / amount / tenureMonths) * 100;
-
-    const updates = {
-      amount,
-      interestRate: monthlyInterestRate,
-      totalAmount: finalAmount,
-      tenure: tenureMonths
-    };
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
+      const formData = new FormData(e.currentTarget);
+      const amount = parseInt(formData.get('amount') as string);
+      const finalAmount = parseInt(formData.get('finalAmount') as string);
+      const tenureMonths = parseInt(formData.get('tenure') as string);
+
+      // Calculate monthly interest rate
+      const interestAmount = finalAmount - amount;
+      const monthlyInterestRate = (interestAmount / amount / tenureMonths) * 100;
+
+      const updates = {
+        amount,
+        interestRate: monthlyInterestRate,
+        totalAmount: finalAmount,
+        tenure: tenureMonths
+      };
+
       const updatedLoan = await dataService.updateLoan(selectedLoan.id, updates);
       setLoans(loans.map(l => l.id === updatedLoan.id ? updatedLoan : l));
       setShowEditModal(false);
@@ -294,6 +304,8 @@ export const LoansManagement: React.FC = () => {
     } catch (error) {
       console.error('Error updating loan:', error);
       pushToast({ type: 'error', message: (error as any)?.message || 'Failed to update loan' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -306,22 +318,25 @@ export const LoansManagement: React.FC = () => {
     e.preventDefault();
     if (!selectedLoan) return;
 
-    const formData = new FormData(e.currentTarget);
-    const amount = parseFloat(formData.get('amount') as string);
-    const method = formData.get('method') as string;
-    const notes = formData.get('notes') as string;
-
-    if (amount <= 0) {
-      pushToast({ type: 'error', message: 'Please enter a valid amount' });
-      return;
-    }
-
-    if (amount > selectedLoan.remainingAmount) {
-      pushToast({ type: 'error', message: 'Payment amount cannot exceed remaining amount' });
-      return;
-    }
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
+      const formData = new FormData(e.currentTarget);
+      const amount = parseFloat(formData.get('amount') as string);
+      const method = formData.get('method') as string;
+      const notes = formData.get('notes') as string;
+
+      if (amount <= 0) {
+        pushToast({ type: 'error', message: 'Please enter a valid amount' });
+        return;
+      }
+
+      if (amount > selectedLoan.remainingAmount) {
+        pushToast({ type: 'error', message: 'Payment amount cannot exceed remaining amount' });
+        return;
+      }
+
       const paymentData = {
         loanId: selectedLoan.id,
         borrowerId: selectedLoan.borrowerId,
@@ -353,6 +368,8 @@ export const LoansManagement: React.FC = () => {
     } catch (error) {
       console.error('Error recording payment:', error);
       pushToast({ type: 'error', message: (error as any)?.message || 'Failed to record payment' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -765,9 +782,10 @@ export const LoansManagement: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-emerald-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
+                  disabled={isSubmitting}
+                  className="flex-1 bg-emerald-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Create Loan
+                  {isSubmitting ? 'Creating...' : 'Create Loan'}
                 </button>
               </div>
             </form>
@@ -1004,9 +1022,10 @@ export const LoansManagement: React.FC = () => {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-teal-600 text-white font-medium rounded-xl hover:shadow-lg transition-all"
+                    disabled={isSubmitting}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-teal-600 text-white font-medium rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Record Payment
+                    {isSubmitting ? 'Recording...' : 'Record Payment'}
                   </button>
                 </div>
               </form>
@@ -1094,9 +1113,10 @@ export const LoansManagement: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-amber-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-amber-600 transition-colors"
+                  disabled={isSubmitting}
+                  className="flex-1 bg-amber-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Save Changes
+                  {isSubmitting ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>

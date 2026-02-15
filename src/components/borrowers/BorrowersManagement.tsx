@@ -298,59 +298,70 @@ export const BorrowersManagement: React.FC = () => {
     e.preventDefault();
 
     if (isSubmitting) return;
-
-    const formData = new FormData(e.currentTarget);
-
-    const lineId = formData.get('lineId') as string;
-    const phone = (formData.get('phone') as string).trim();
-    const address = (formData.get('address') as string).trim();
-
-    // Validate phone number - exactly 10 digits
-    if (!/^\d{10}$/.test(phone)) {
-      pushToast({
-        type: 'error',
-        message: 'Phone number must be exactly 10 digits'
-      });
-      return;
-    }
-
-    // Validate address - must be complete (at least 20 characters)
-    if (address.length < 20) {
-      pushToast({
-        type: 'error',
-        message: 'Please enter a complete address (minimum 20 characters)'
-      });
-      return;
-    }
-
-    if (user?.role === 'agent' && selectedLine && lineId !== selectedLine.id) {
-      pushToast({
-        type: 'error',
-        message: `You can only add borrowers to your selected line: ${selectedLine.name}`
-      });
-      return;
-    }
-
-    const newBorrower = {
-      name: formData.get('name') as string,
-      phone: phone,
-      address: address,
-      lineId: lineId,
-      isHighRisk: false,
-      isDefaulter: false
-    };
-
     setIsSubmitting(true);
+
     try {
+      const formData = new FormData(e.currentTarget);
+
+      const lineId = formData.get('lineId') as string;
+      const phone = (formData.get('phone') as string).trim();
+      const address = (formData.get('address') as string).trim();
+
+      // Validate phone number - exactly 10 digits
+      if (!/^\d{10}$/.test(phone)) {
+        pushToast({
+          type: 'error',
+          message: 'Phone number must be exactly 10 digits'
+        });
+        return;
+      }
+
+      // Validate address - must be complete (at least 20 characters)
+      if (address.length < 20) {
+        pushToast({
+          type: 'error',
+          message: 'Please enter a complete address (minimum 20 characters)'
+        });
+        return;
+      }
+
+      if (user?.role === 'agent' && selectedLine && lineId !== selectedLine.id) {
+        pushToast({
+          type: 'error',
+          message: `You can only add borrowers to your selected line: ${selectedLine.name}`
+        });
+        return;
+      }
+
+      const newBorrower = {
+        name: formData.get('name') as string,
+        phone: phone,
+        address: address,
+        lineId: lineId,
+        isHighRisk: false,
+        isDefaulter: false
+      };
+
       const createdBorrower = await dataService.createBorrower(newBorrower);
       setBorrowers([...borrowers, createdBorrower]);
       const linesData = await dataService.getLines();
       setLines(linesData);
       setShowCreateModal(false);
       pushToast({ type: 'success', message: 'Borrower created successfully' });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating borrower:', error);
-      pushToast({ type: 'error', message: (error as any)?.message || 'Failed to create borrower' });
+
+      let errorMessage = 'Failed to create borrower';
+
+      if (error.message?.includes('belongs to a user')) {
+        errorMessage = 'This phone number belongs to a user (agent/co-owner/owner) and cannot be used for a borrower';
+      } else if (error.message?.includes('duplicate') || error.message?.includes('unique') || error.code === '23505') {
+        errorMessage = 'A borrower with this phone number already exists in this line';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      pushToast({ type: 'error', message: errorMessage });
     } finally {
       setIsSubmitting(false);
     }
