@@ -91,7 +91,7 @@ export const ExpensesManagement: React.FC = () => {
 
       if (user?.role === 'owner' || user?.role === 'co-owner') {
         // For owners/co-owners, submitted_by is the agent of the line
-        submittedBy = selectedLineObj?.agent_id || user?.id || '';
+        submittedBy = selectedLineObj?.agentId || user?.id || '';
       } else {
         // For agents, submitted_by is themselves
         submittedBy = user?.id || '';
