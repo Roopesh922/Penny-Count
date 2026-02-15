@@ -56,8 +56,14 @@ export const ExpensesManagement: React.FC = () => {
       let filteredExpenses = expensesData;
 
       if (user?.role === 'owner') {
-        // Owners see all expenses
-        setAgents(usersData.filter((u: any) => u.role === 'agent' || u.role === 'co-owner'));
+        // Owners see only expenses from agents/co-owners they added
+        const ownedAgents = usersData.filter((u: any) =>
+          (u.role === 'agent' || u.role === 'co-owner') && u.addedBy === user.id
+        );
+        const agentIds = ownedAgents.map((a: any) => a.id);
+
+        filteredExpenses = expensesData.filter((e: any) => agentIds.includes(e.submittedBy));
+        setAgents(ownedAgents);
       } else if (user?.role === 'co-owner') {
         // Co-owners see only expenses from agents assigned to their lines
         const coOwnerLines = linesData.filter((l: any) => l.co_owner_id === user.id);

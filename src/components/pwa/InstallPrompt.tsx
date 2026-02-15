@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, X, Smartphone } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -8,6 +9,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export const InstallPrompt: React.FC = () => {
+  const { user } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -19,27 +21,16 @@ export const InstallPrompt: React.FC = () => {
       return;
     }
 
-    // Check if user dismissed the prompt before
+    // Check if user permanently dismissed the prompt
     const dismissed = localStorage.getItem('pwa-install-dismissed');
-    if (dismissed) {
-      const dismissedDate = new Date(dismissed);
-      const daysSinceDismissed = (Date.now() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24);
-
-      // Show again after 7 days
-      if (daysSinceDismissed < 7) {
-        return;
-      }
+    if (dismissed === 'true') {
+      return;
     }
 
     const handler = (e: Event) => {
       e.preventDefault();
       const promptEvent = e as BeforeInstallPromptEvent;
       setDeferredPrompt(promptEvent);
-
-      // Show prompt after 30 seconds
-      setTimeout(() => {
-        setShowPrompt(true);
-      }, 30000);
     };
 
     window.addEventListener('beforeinstallprompt', handler);
@@ -48,6 +39,16 @@ export const InstallPrompt: React.FC = () => {
       window.removeEventListener('beforeinstallprompt', handler);
     };
   }, []);
+
+  // Show prompt after user logs in
+  useEffect(() => {
+    if (user && deferredPrompt && !isInstalled) {
+      const dismissed = localStorage.getItem('pwa-install-dismissed');
+      if (dismissed !== 'true') {
+        setShowPrompt(true);
+      }
+    }
+  }, [user, deferredPrompt, isInstalled]);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
@@ -66,7 +67,7 @@ export const InstallPrompt: React.FC = () => {
 
   const handleDismiss = () => {
     setShowPrompt(false);
-    localStorage.setItem('pwa-install-dismissed', new Date().toISOString());
+    localStorage.setItem('pwa-install-dismissed', 'true');
   };
 
   if (isInstalled || !showPrompt || !deferredPrompt) {
