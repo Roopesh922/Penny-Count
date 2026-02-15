@@ -268,27 +268,36 @@ class DataService {
   async getBorrowers(): Promise<Borrower[]> {
     const { data, error } = await supabase
       .from('borrowers')
-      .select('*')
+      .select(`
+        *,
+        loans!borrower_id(id, status)
+      `)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
 
-    return (data || []).map(borrower => ({
-      id: borrower.id,
-      serialNumber: borrower.serial_number,
-      name: borrower.name,
-      phone: borrower.phone,
-      address: borrower.address,
-      geolocation: borrower.geolocation,
-      isHighRisk: borrower.is_high_risk,
-      isDefaulter: borrower.is_defaulter,
-      totalLoans: borrower.total_loans,
-      activeLoans: borrower.active_loans,
-      totalRepaid: Number(borrower.total_repaid),
-      lineId: borrower.line_id,
-      agentId: borrower.agent_id,
-      createdAt: new Date(borrower.created_at)
-    }));
+    return (data || []).map(borrower => {
+      const loans = borrower.loans || [];
+      const activeCount = loans.filter((l: any) => l.status === 'active').length;
+      const totalCount = loans.length;
+
+      return {
+        id: borrower.id,
+        serialNumber: borrower.serial_number,
+        name: borrower.name,
+        phone: borrower.phone,
+        address: borrower.address,
+        geolocation: borrower.geolocation,
+        isHighRisk: borrower.is_high_risk,
+        isDefaulter: borrower.is_defaulter,
+        totalLoans: totalCount,
+        activeLoans: activeCount,
+        totalRepaid: Number(borrower.total_repaid),
+        lineId: borrower.line_id,
+        agentId: borrower.agent_id,
+        createdAt: new Date(borrower.created_at)
+      };
+    });
   }
 
   async createBorrower(borrower: Partial<Borrower>): Promise<Borrower> {
