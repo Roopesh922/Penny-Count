@@ -446,45 +446,31 @@ export const BorrowersManagement: React.FC = () => {
   const handleConfirmDelete = async () => {
     if (!deletingBorrower || isSubmitting) return;
 
-    // Check if borrower has active loans
-    if (deletingBorrower.activeLoans && deletingBorrower.activeLoans > 0) {
-      if (user?.role === 'owner') {
-        // Owner can delete directly
-        setIsSubmitting(true);
-        try {
-          await dataService.deleteBorrower(deletingBorrower.id);
-          setBorrowers(borrowers.filter(b => b.id !== deletingBorrower.id));
-          setShowDeleteModal(false);
-          setDeletingBorrower(null);
-          pushToast({ type: 'success', message: 'Borrower deleted successfully' });
-        } catch (error) {
-          console.error('Error deleting borrower:', error);
-          pushToast({ type: 'error', message: (error as any)?.message || 'Failed to delete borrower' });
-        } finally {
-          setIsSubmitting(false);
-        }
-      } else {
-        // Non-owners cannot delete if loans exist
-        pushToast({
-          type: 'error',
-          message: 'Cannot delete borrower with active loans. Clear the loan first or request owner to delete.'
-        });
+    setIsSubmitting(true);
+    try {
+      await dataService.deleteBorrower(deletingBorrower.id);
+
+      await loadBorrowers();
+
+      setShowDeleteModal(false);
+      setDeletingBorrower(null);
+      pushToast({ type: 'success', message: 'Borrower deleted successfully' });
+    } catch (error: any) {
+      console.error('Error deleting borrower:', error);
+
+      let errorMessage = 'Failed to delete borrower';
+
+      if (error.message?.includes('policy')) {
+        errorMessage = 'You do not have permission to delete this borrower';
+      } else if (error.message?.includes('foreign key') || error.message?.includes('constraint')) {
+        errorMessage = 'Cannot delete borrower with existing loans or payments';
+      } else if (error.message) {
+        errorMessage = error.message;
       }
-    } else {
-      // No active loans - anyone can delete
-      setIsSubmitting(true);
-      try {
-        await dataService.deleteBorrower(deletingBorrower.id);
-        setBorrowers(borrowers.filter(b => b.id !== deletingBorrower.id));
-        setShowDeleteModal(false);
-        setDeletingBorrower(null);
-        pushToast({ type: 'success', message: 'Borrower deleted successfully' });
-      } catch (error) {
-        console.error('Error deleting borrower:', error);
-        pushToast({ type: 'error', message: (error as any)?.message || 'Failed to delete borrower' });
-      } finally {
-        setIsSubmitting(false);
-      }
+
+      pushToast({ type: 'error', message: errorMessage });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
