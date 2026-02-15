@@ -1433,6 +1433,7 @@ class DataService {
         *,
         category:expense_categories(*),
         submittedByUser:users!expenses_submitted_by_fkey(*),
+        addedByUser:users!expenses_added_by_fkey(*),
         approvedByUser:users!expenses_approved_by_fkey(*)
       `)
       .order('expense_date', { ascending: false });
@@ -1457,6 +1458,8 @@ class DataService {
       paymentMethod: exp.payment_method,
       submittedBy: exp.submitted_by,
       submittedByUser: exp.submittedByUser,
+      addedBy: exp.added_by,
+      addedByUser: exp.addedByUser,
       addedByRole: exp.added_by_role,
       approvedBy: exp.approved_by,
       approvedByUser: exp.approvedByUser,
@@ -1475,6 +1478,7 @@ class DataService {
         *,
         category:expense_categories(*),
         submittedByUser:users!expenses_submitted_by_fkey(*),
+        addedByUser:users!expenses_added_by_fkey(*),
         approvedByUser:users!expenses_approved_by_fkey(*)
       `)
       .eq('expense_date', date);
@@ -1498,6 +1502,8 @@ class DataService {
       paymentMethod: exp.payment_method,
       submittedBy: exp.submitted_by,
       submittedByUser: exp.submittedByUser,
+      addedBy: exp.added_by,
+      addedByUser: exp.addedByUser,
       addedByRole: exp.added_by_role,
       approvedBy: exp.approved_by,
       approvedByUser: exp.approvedByUser,
@@ -1521,6 +1527,7 @@ class DataService {
         receipt_url: expense.receiptUrl,
         payment_method: expense.paymentMethod,
         submitted_by: expense.submittedBy,
+        added_by: expense.addedBy,
         added_by_role: expense.addedByRole,
         status: 'approved',
         approved_by: expense.submittedBy,

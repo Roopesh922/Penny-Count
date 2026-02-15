@@ -24,6 +24,7 @@ export const ExpensesManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAgent, setSelectedAgent] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedLineFilter, setSelectedLineFilter] = useState<string>('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -79,15 +80,29 @@ export const ExpensesManagement: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const submittedBy = user?.role === 'owner' && formData.submittedBy
-        ? formData.submittedBy
-        : user?.id || '';
+      const lineId = selectedLine ? selectedLine.id : formData.lineId;
+
+      // Get the agent for the selected line
+      const selectedLineObj = lines.find(l => l.id === lineId);
+
+      // Determine submitted_by and added_by based on role
+      let submittedBy: string;
+      let addedBy: string = user?.id || '';
+
+      if (user?.role === 'owner' || user?.role === 'co-owner') {
+        // For owners/co-owners, submitted_by is the agent of the line
+        submittedBy = selectedLineObj?.agent_id || user?.id || '';
+      } else {
+        // For agents, submitted_by is themselves
+        submittedBy = user?.id || '';
+      }
 
       await dataService.createExpense({
         ...formData,
-        lineId: selectedLine ? selectedLine.id : formData.lineId,
+        lineId,
         amount: parseFloat(formData.amount),
         submittedBy,
+        addedBy,
         addedByRole: user?.role
       });
       setShowAddModal(false);
@@ -114,12 +129,13 @@ export const ExpensesManagement: React.FC = () => {
                          expense.submittedByUser?.name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesAgent = selectedAgent === 'all' || expense.submittedBy === selectedAgent;
     const matchesCategory = selectedCategory === 'all' || expense.categoryId === selectedCategory;
+    const matchesLine = selectedLineFilter === 'all' || expense.lineId === selectedLineFilter;
     const expenseDate = new Date(expense.expenseDate);
     const matchesDateRange =
       (!startDate || expenseDate >= new Date(startDate)) &&
       (!endDate || expenseDate <= new Date(endDate));
 
-    return matchesSearch && matchesAgent && matchesCategory && matchesDateRange;
+    return matchesSearch && matchesAgent && matchesCategory && matchesLine && matchesDateRange;
   });
 
   const totalExpenses = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
@@ -274,7 +290,7 @@ export const ExpensesManagement: React.FC = () => {
 
       {/* Filters */}
       <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
@@ -298,6 +314,17 @@ export const ExpensesManagement: React.FC = () => {
               ))}
             </select>
           )}
+
+          <select
+            value={selectedLineFilter}
+            onChange={(e) => setSelectedLineFilter(e.target.value)}
+            className="px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
+          >
+            <option value="all">All Lines</option>
+            {lines.map(line => (
+              <option key={line.id} value={line.id}>{line.name}</option>
+            ))}
+          </select>
 
           <select
             value={selectedCategory}
