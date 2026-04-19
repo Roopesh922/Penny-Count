@@ -15,27 +15,27 @@ export const NotificationCenter: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Defensive: handle 404 for notifications gracefully
-  useEffect(() => {
-    if (user) {
-      setLoading(true);
+  const loadNotifications = React.useCallback(async (showLoad = true) => {
+    if (!user) return;
+    if (showLoad) setLoading(true);
+    try {
+      const userNotifications = await dataService.getNotifications(user.id);
+      setNotifications(userNotifications);
+      setUnreadCount(userNotifications.filter(n => !n.isRead).length);
       setError(null);
-      dataService.getNotifications(user.id)
-        .then(userNotifications => {
-          setNotifications(userNotifications);
-          setUnreadCount(userNotifications.filter(n => !n.isRead).length);
-        })
-        .catch(err => {
-          if (err.message && err.message.includes('404')) {
-            setNotifications([]);
-            setError('No notifications found.');
-          } else {
-            setError(err.message || 'Failed to load notifications');
-          }
-        })
-        .finally(() => setLoading(false));
+    } catch (err: any) {
+      setError(err.message || 'Failed to load notifications');
+    } finally {
+      setLoading(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    loadNotifications();
+    // Poll every 60 seconds for new notifications
+    const interval = setInterval(() => loadNotifications(false), 60000);
+    return () => clearInterval(interval);
+  }, [loadNotifications]);
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -82,10 +82,6 @@ export const NotificationCenter: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="text-gray-500">Loading notifications...</div>;
-  if (error) return <div className="bg-red-100 text-red-700 p-2 rounded">{error}</div>;
-  if (!notifications.length) return <div className="text-gray-500">No notifications found.</div>;
-
   return (
     <div className="relative">
       {/* Notification Bell */}
@@ -129,10 +125,15 @@ export const NotificationCenter: React.FC = () => {
 
             {/* Notifications List */}
             <div className="max-h-80 overflow-y-auto">
-              {notifications.length === 0 ? (
-                <div className="p-4 text-center text-gray-500">
-                  <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No notifications</p>
+              {loading ? (
+                <div className="p-6 text-center">
+                  <div className="animate-spin w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full mx-auto" />
+                </div>
+              ) : notifications.length === 0 ? (
+                <div className="p-6 text-center text-gray-400">
+                  <Bell className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                  <p className="text-sm font-medium">No notifications</p>
+                  <p className="text-xs mt-1">You're all caught up!</p>
                 </div>
               ) : (
                 notifications.map((notification) => (
@@ -172,7 +173,16 @@ export const NotificationCenter: React.FC = () => {
             {/* Footer */}
             {notifications.length > 0 && (
               <div className="p-3 border-t border-gray-200 text-center">
-                <button className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
+                <button
+                  className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
+                  onClick={async () => {
+                    for (const n of notifications.filter(n => !n.isRead)) {
+                      await dataService.markNotificationRead(n.id).catch(() => {});
+                    }
+                    setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+                    setUnreadCount(0);
+                  }}
+                >
                   Mark all as read
                 </button>
               </div>

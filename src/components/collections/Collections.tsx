@@ -630,7 +630,7 @@ export const Collections: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="grid grid-cols-1 md:grid-cols-3 gap-6"
+        className="grid grid-cols-2 md:grid-cols-4 gap-4"
       >
         <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between mb-2">
@@ -658,6 +658,20 @@ export const Collections: React.FC = () => {
             </span>
           </div>
           <p className="text-white/90">Total Collected</p>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between mb-2">
+            <Calendar className="w-8 h-8" />
+            <span className="text-3xl font-bold">
+              {loans.filter(l => {
+                const d = new Date(l.dueDate);
+                const today = new Date();
+                return d.toDateString() === today.toDateString();
+              }).length}
+            </span>
+          </div>
+          <p className="text-white/90">Due Today</p>
         </div>
       </motion.div>
 

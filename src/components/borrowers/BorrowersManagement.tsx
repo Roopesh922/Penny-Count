@@ -241,6 +241,8 @@ export const BorrowersManagement: React.FC = () => {
   const [loanBorrower, setLoanBorrower] = useState<Borrower | null>(null);
   const [selectedBorrower, setSelectedBorrower] = useState<Borrower | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [borrowerLoans, setBorrowerLoans] = useState<any[]>([]);
+  const [borrowerLoansLoading, setBorrowerLoansLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [riskFilter, setRiskFilter] = useState<string>('all');
   const [showBulkImport, setShowBulkImport] = useState(false);
@@ -367,9 +369,19 @@ export const BorrowersManagement: React.FC = () => {
     }
   };
 
-  const handleViewBorrower = (borrower: Borrower) => {
+  const handleViewBorrower = async (borrower: Borrower) => {
     setSelectedBorrower(borrower);
     setShowDetailsModal(true);
+    setBorrowerLoans([]);
+    setBorrowerLoansLoading(true);
+    try {
+      const loans = await dataService.getLoansByBorrower(borrower.id);
+      setBorrowerLoans(loans);
+    } catch {
+      // silent fail
+    } finally {
+      setBorrowerLoansLoading(false);
+    }
   };
 
   const handleNewLoanClick = (borrower: Borrower) => {
@@ -1044,6 +1056,17 @@ export const BorrowersManagement: React.FC = () => {
                       <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
                       <span className="text-gray-600">{selectedBorrower.address}</span>
                     </div>
+                    {selectedBorrower.phone && (
+                      <a
+                        href={`https://wa.me/91${selectedBorrower.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${selectedBorrower.name}, this is a reminder regarding your loan. Please contact us at your earliest convenience.`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm text-green-600 hover:text-green-700 font-medium mt-1"
+                      >
+                        <span>📲</span>
+                        <span>WhatsApp</span>
+                      </a>
+                    )}
                   </div>
                 </div>
                 
@@ -1088,6 +1111,48 @@ export const BorrowersManagement: React.FC = () => {
                     <span>Delete</span>
                   </motion.button>
                 </div>
+              </div>
+
+              {/* Loan History */}
+              <div className="pt-4 border-t border-gray-200">
+                <h4 className="font-semibold text-gray-800 mb-3">Loan History</h4>
+                {borrowerLoansLoading ? (
+                  <div className="space-y-2 animate-pulse">
+                    {[1,2,3].map(i => <div key={i} className="h-12 bg-gray-100 rounded-lg" />)}
+                  </div>
+                ) : borrowerLoans.length === 0 ? (
+                  <p className="text-gray-400 text-sm text-center py-4">No loan history found</p>
+                ) : (
+                  <div className="space-y-2 max-h-52 overflow-y-auto">
+                    {borrowerLoans.map(loan => {
+                      const progress = loan.totalAmount > 0 ? Math.round((loan.paidAmount / loan.totalAmount) * 100) : 0;
+                      return (
+                        <div key={loan.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-gray-800">₹{loan.amount.toLocaleString()}</span>
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                loan.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                loan.status === 'active' ? 'bg-blue-100 text-blue-700' :
+                                loan.status === 'overdue' ? 'bg-orange-100 text-orange-700' :
+                                'bg-red-100 text-red-700'
+                              }`}>{loan.status}</span>
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                                <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${progress}%` }} />
+                              </div>
+                              <span className="text-xs text-gray-500">{progress}%</span>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              {new Date(loan.disbursedAt).toLocaleDateString('en-IN')} · ₹{loan.remainingAmount.toLocaleString()} left
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}

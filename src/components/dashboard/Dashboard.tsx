@@ -130,6 +130,8 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
     };
 
     loadMetrics();
+    // Generate overdue notifications silently in background
+    dataService.generateOverdueNotifications().catch(() => {});
   }, [user, selectedLine]);
 
   // If agent, ensure cashOnHand and collection metrics are accurate by computing from lines

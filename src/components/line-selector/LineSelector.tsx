@@ -47,8 +47,9 @@ export const LineSelector: React.FC = () => {
                 </div>
                 {selectedLine && (
                   <button
-                    onClick={() => window.location.reload()}
+                    onClick={() => selectLine(selectedLine.id)}
                     className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                    title="Keep current line"
                   >
                     <X className="w-6 h-6" />
                   </button>

@@ -497,7 +497,10 @@ export const LoansManagement: React.FC = () => {
           </div>
           <h3 className="text-sm font-medium text-gray-600 mb-1">Overdue</h3>
           <p className="text-2xl font-bold text-gray-800">
-            {loans.filter(l => l.status === 'overdue' || l.status === 'defaulted').length}
+            {loans.filter(l =>
+              l.status === 'overdue' || l.status === 'defaulted' ||
+              (l.status === 'active' && new Date(l.dueDate) < new Date())
+            ).length}
           </p>
           <p className="text-sm text-yellow-600">Needs attention</p>
         </motion.div>
