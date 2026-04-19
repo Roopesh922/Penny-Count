@@ -37,13 +37,12 @@ export const AgentModeToggle: React.FC = () => {
 
       setLines(linesData.filter(l => l.coOwnerId === user?.id));
     } catch (error) {
-      console.error('Error loading data:', error);
     }
   };
 
   const handleStartAgentMode = async () => {
     if (!selectedLine) {
-      alert('Please select a line');
+      return;  // line not selected
       return;
     }
 
@@ -53,7 +52,6 @@ export const AgentModeToggle: React.FC = () => {
       setIsAgentMode(true);
       setShowConfirmModal(false);
     } catch (error) {
-      console.error('Error starting agent mode:', error);
     }
   };
 
@@ -67,7 +65,6 @@ export const AgentModeToggle: React.FC = () => {
       setShowStatsModal(false);
       loadData();
     } catch (error) {
-      console.error('Error ending agent mode:', error);
     }
   };
 

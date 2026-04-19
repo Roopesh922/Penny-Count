@@ -50,8 +50,7 @@ export const QRPaymentSystem: React.FC<QRPaymentSystemProps> = ({
         setSelectedMethod(methods[0]);
       }
     } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
+          } finally {
       setLoading(false);
     }
   };
@@ -90,8 +89,7 @@ export const QRPaymentSystem: React.FC<QRPaymentSystemProps> = ({
         if (payment) onPaymentSuccess(payment);
       }
     } catch (error) {
-      console.error('Error reconciling payment:', error);
-    }
+          }
   };
 
   const pendingPayments = qrPayments.filter(p => !p.reconciled);

@@ -59,8 +59,7 @@ export const OwnerDashboard: React.FC = () => {
         setEditedOpeningBalance(accountData.openingBalance.toString());
       }
     } catch (error) {
-      console.error('Error loading daily data:', error);
-    } finally {
+          } finally {
       setLoading(false);
     }
   };
@@ -75,8 +74,7 @@ export const OwnerDashboard: React.FC = () => {
       setIsEditingOpening(false);
       loadDailyData();
     } catch (error) {
-      console.error('Error updating opening balance:', error);
-    }
+          }
   };
 
   const handleLockAccount = async () => {
@@ -90,16 +88,14 @@ export const OwnerDashboard: React.FC = () => {
       });
       loadDailyData();
     } catch (error) {
-      console.error('Error locking account:', error);
-    }
+          }
   };
 
   const handleExportToExcel = async () => {
     try {
       await dataService.exportDailyAccountToExcel(selectedDate, selectedLine === 'all' ? undefined : selectedLine);
     } catch (error) {
-      console.error('Error exporting to Excel:', error);
-    }
+          }
   };
 
   const regularCollections = collections.filter(c => c.paymentType === 'regular' || !c.paymentType).reduce((sum, c) => sum + c.amount, 0);

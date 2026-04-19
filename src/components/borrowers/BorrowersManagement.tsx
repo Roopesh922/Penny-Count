@@ -352,8 +352,7 @@ export const BorrowersManagement: React.FC = () => {
       setShowCreateModal(false);
       pushToast({ type: 'success', message: 'Borrower created successfully' });
     } catch (error: any) {
-      console.error('Error creating borrower:', error);
-
+      
       let errorMessage = 'Failed to create borrower';
 
       if (error.message?.includes('belongs to a user')) {
@@ -403,8 +402,7 @@ export const BorrowersManagement: React.FC = () => {
         setBorrowers(borrowers.map(b => b.id === borrowerId ? updatedBorrower : b));
       }
     } catch (error) {
-      console.error('Error updating borrower risk:', error);
-    }
+          }
   };
 
   const handleEditBorrower = (borrower: Borrower) => {
@@ -453,8 +451,7 @@ export const BorrowersManagement: React.FC = () => {
       setEditingBorrower(null);
       pushToast({ type: 'success', message: 'Borrower updated successfully' });
     } catch (error) {
-      console.error('Error updating borrower:', error);
-      pushToast({ type: 'error', message: (error as any)?.message || 'Failed to update borrower' });
+            pushToast({ type: 'error', message: (error as any)?.message || 'Failed to update borrower' });
     } finally {
       setIsSubmitting(false);
     }
@@ -480,8 +477,7 @@ export const BorrowersManagement: React.FC = () => {
       setDeletingBorrower(null);
       pushToast({ type: 'success', message: 'Borrower deleted successfully' });
     } catch (error: any) {
-      console.error('Error deleting borrower:', error);
-
+      
       let errorMessage = 'Failed to delete borrower';
 
       if (error.message?.includes('policy')) {
@@ -523,8 +519,7 @@ export const BorrowersManagement: React.FC = () => {
       setDeletingBorrower(null);
       setDeleteReason('');
     } catch (error) {
-      console.error('Error requesting delete:', error);
-      pushToast({ type: 'error', message: (error as any)?.message || 'Failed to send deletion request' });
+            pushToast({ type: 'error', message: (error as any)?.message || 'Failed to send deletion request' });
     } finally {
       setIsSubmitting(false);
     }

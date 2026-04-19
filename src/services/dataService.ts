@@ -41,13 +41,7 @@ class DataService {
         });
 
       if (error) {
-        console.error('Claim user error:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-        throw error;
+                throw error;
       }
 
       if (!data || data.length === 0) {
@@ -90,8 +84,7 @@ class DataService {
     }
 
     if (!data) {
-      console.error('No data returned after update for user:', id);
-      throw new Error('User not found or update not allowed');
+            throw new Error('User not found or update not allowed');
     }
 
     return {
@@ -108,8 +101,7 @@ class DataService {
       .rpc('respond_to_team_request', { response });
 
     if (error) {
-      console.error('Respond to team request error:', error);
-      throw error;
+            throw error;
     }
 
     if (!data || data.length === 0) {
@@ -572,7 +564,6 @@ class DataService {
           .eq('id', loan.lineId);
       }
     } catch (e) {
-      console.warn('Failed to update line totals:', e);
     }
 
     return {
@@ -760,8 +751,7 @@ class DataService {
       .single();
 
     if (error) {
-      console.error('Payment creation error:', error);
-      throw error;
+            throw error;
     }
 
     const { data: loan } = await supabase
@@ -796,7 +786,6 @@ class DataService {
             .eq('id', loan.line_id);
         }
       } catch (e) {
-        console.warn('Failed to update line totals:', e);
       }
     }
 

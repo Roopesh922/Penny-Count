@@ -35,6 +35,7 @@ export const Collections: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'today' | 'overdue'>('all');
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [paymentSchedule, setPaymentSchedule] = useState<PaymentSchedule[]>([]);
+  const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
   const [showCollectionModal, setShowCollectionModal] = useState(false);
   const [selectedTerm, setSelectedTerm] = useState<PaymentSchedule | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,8 +79,7 @@ export const Collections: React.FC = () => {
       });
       setBorrowers(borrowerMap);
     } catch (error) {
-      console.error('Error loading collections data:', error);
-      showToast('Failed to load collection data', 'error');
+            showToast('Failed to load collection data', 'error');
     } finally {
       setLoading(false);
     }
@@ -170,13 +170,21 @@ export const Collections: React.FC = () => {
 
   const handleViewLoan = async (loan: Loan) => {
     setSelectedLoan(loan);
-    const schedule = await calculatePaymentSchedule(loan);
+    setPaymentHistory([]);
+    const [schedule, history] = await Promise.all([
+      calculatePaymentSchedule(loan),
+      dataService.getPaymentsByLoan(loan.id)
+    ]);
     setPaymentSchedule(schedule);
+    setPaymentHistory(history.sort((a: any, b: any) =>
+      new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
+    ));
   };
 
   const handleBackToList = () => {
     setSelectedLoan(null);
     setPaymentSchedule([]);
+    setPaymentHistory([]);
   };
 
   const handleCollectPayment = (term: PaymentSchedule) => {
@@ -261,8 +269,7 @@ export const Collections: React.FC = () => {
         setPaymentSchedule(schedule);
       }
     } catch (error) {
-      console.error('Error submitting collection:', error);
-      showToast('Failed to record collection', 'error');
+            showToast('Failed to record collection', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -504,6 +511,41 @@ export const Collections: React.FC = () => {
             ))}
           </div>
         </motion.div>
+
+        {/* Payment History */}
+        {paymentHistory.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+          >
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              Payment History ({paymentHistory.length})
+            </h3>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {paymentHistory.map((payment: any) => (
+                <div key={payment.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">
+                      ₹{payment.amount.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(payment.paymentDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {payment.method && ` · ${payment.method.toUpperCase()}`}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    {payment.transactionId && (
+                      <p className="text-xs text-gray-400 font-mono">{payment.transactionId}</p>
+                    )}
+                    <span className="inline-block px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">Paid</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         <AnimatePresence>
           {showCollectionModal && selectedTerm && (

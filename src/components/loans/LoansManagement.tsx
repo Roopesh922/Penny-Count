@@ -64,8 +64,7 @@ export const LoansManagement: React.FC = () => {
         borrowersData.forEach((br: Borrower) => { map[br.id] = br.name; });
         setBorrowerMap(map);
       } catch (error) {
-        console.error('Error loading loans:', error);
-        pushToast({ type: 'error', message: 'Failed to load loans data' });
+                pushToast({ type: 'error', message: 'Failed to load loans data' });
       } finally {
         setLoading(false);
       }
@@ -169,8 +168,7 @@ export const LoansManagement: React.FC = () => {
       setShowCreateModal(false);
       pushToast({ type: 'success', message: 'Loan created successfully' });
     } catch (error) {
-      console.error('Error creating loan:', error);
-      pushToast({ type: 'error', message: (error as any)?.message || 'Failed to create loan' });
+            pushToast({ type: 'error', message: (error as any)?.message || 'Failed to create loan' });
     } finally {
       setIsSubmitting(false);
     }
@@ -216,8 +214,7 @@ export const LoansManagement: React.FC = () => {
       setSelectedLoan(null);
       pushToast({ type: 'success', message: 'Loan updated successfully' });
     } catch (error) {
-      console.error('Error updating loan:', error);
-      pushToast({ type: 'error', message: (error as any)?.message || 'Failed to update loan' });
+            pushToast({ type: 'error', message: (error as any)?.message || 'Failed to update loan' });
     } finally {
       setIsSubmitting(false);
     }
@@ -280,8 +277,7 @@ export const LoansManagement: React.FC = () => {
       setShowPaymentModal(false);
       pushToast({ type: 'success', message: `Payment of ₹${amount.toLocaleString()} recorded successfully` });
     } catch (error) {
-      console.error('Error recording payment:', error);
-      pushToast({ type: 'error', message: (error as any)?.message || 'Failed to record payment' });
+            pushToast({ type: 'error', message: (error as any)?.message || 'Failed to record payment' });
     } finally {
       setIsSubmitting(false);
     }

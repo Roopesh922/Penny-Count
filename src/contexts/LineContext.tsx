@@ -69,8 +69,7 @@ export const LineProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setIsLoading(false);
     } catch (error) {
-      console.error('Error loading lines:', error);
-      setIsLoading(false);
+            setIsLoading(false);
     }
   };
 

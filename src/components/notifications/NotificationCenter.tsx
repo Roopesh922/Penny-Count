@@ -45,8 +45,7 @@ export const NotificationCenter: React.FC = () => {
       ));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
+          }
   };
 
   const getNotificationIcon = (type: Notification['type']) => {

@@ -97,8 +97,7 @@ class OfflineQueueService {
               .eq('id', item.id);
           }
         } catch (error) {
-          console.error('Failed to process queue item:', error);
-          item.status = 'failed';
+                    item.status = 'failed';
           failedCount++;
 
           // Update error in database

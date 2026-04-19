@@ -37,7 +37,6 @@ export const BulkImport: React.FC = () => {
       const linesData = await dataService.getLines();
       setLines(linesData);
     } catch (error) {
-      console.error('Error loading lines:', error);
     }
   };
 

@@ -72,7 +72,6 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const startTracking = () => {
     if (!navigator.geolocation) {
-      console.error('Geolocation is not supported by this browser.');
       return;
     }
 
@@ -89,8 +88,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updateLocation(location);
       },
       (error) => {
-        console.error('Error getting location:', error);
-      },
+              },
       {
         enableHighAccuracy: true,
         maximumAge: 10000,
@@ -110,10 +108,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           };
           updateLocation(location);
         },
-        (error) => console.error('Error in periodic location update:', error),
-        { enableHighAccuracy: true, timeout: 5000 }
-      );
-    }, LOCATION_UPDATE_INTERVAL);
+        (error) =>     }, LOCATION_UPDATE_INTERVAL);
 
     setIsTracking(true);
     localStorage.setItem(LOCATION_STORAGE_KEY, 'true');
@@ -184,8 +179,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           });
       }
     } catch (error) {
-      console.error('Error updating location:', error);
-    }
+          }
   };
 
   const refreshAgentLocations = async () => {
@@ -227,8 +221,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         .order('last_updated', { ascending: false });
 
       if (locationError) {
-        console.error('Error fetching locations:', locationError);
-        return;
+                return;
       }
 
       if (!locationData || locationData.length === 0) {
@@ -244,8 +237,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         .in('id', userIds);
 
       if (userError) {
-        console.error('Error fetching users:', userError);
-        return;
+                return;
       }
 
       // Combine location and user data
@@ -265,8 +257,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       setAgentLocations(locations);
     } catch (error) {
-      console.error('Error fetching agent locations:', error);
-    }
+          }
   };
 
   // Cleanup on unmount

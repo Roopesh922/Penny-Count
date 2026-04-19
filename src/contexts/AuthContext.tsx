@@ -69,7 +69,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (!data) {
         // User record not found - account was deleted
-        console.error('User account not found - may have been deleted');
         await supabase.auth.signOut();
         setUser(null);
         localStorage.removeItem('penny-count-user');
@@ -80,7 +79,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Check if user account is inactive (soft deleted)
       if (data.is_active === false) {
-        console.error('User account is inactive');
         await supabase.auth.signOut();
         setUser(null);
         localStorage.removeItem('penny-count-user');
@@ -104,8 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(userProfile);
       localStorage.setItem('penny-count-user', JSON.stringify(userProfile));
     } catch (error: any) {
-      console.error('Error loading user profile:', error);
-      await supabase.auth.signOut();
+            await supabase.auth.signOut();
       setUser(null);
       localStorage.removeItem('penny-count-user');
       setLoginError('Failed to load user profile. Please try again.');
@@ -172,8 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (authError) {
-        console.error('Signup error:', authError);
-        throw authError;
+                throw authError;
       }
 
       if (authData.user) {
@@ -191,8 +187,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }]);
 
         if (profileError) {
-          console.error('Profile creation error:', profileError);
-
+          
           // Handle specific duplicate errors
           if (profileError.message.includes('users_phone_key')) {
             setSignupError('This phone number is already registered.');
@@ -212,8 +207,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
       return false;
     } catch (err: any) {
-      console.error('Signup caught error:', err);
-      let msg = err?.message || 'Sign up failed.';
+            let msg = err?.message || 'Sign up failed.';
 
       // Handle duplicate errors
       if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
@@ -250,8 +244,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
 
         if (lookupError) {
-          console.error('Phone lookup error:', lookupError);
-          throw new Error('Invalid phone number or credentials.');
+                    throw new Error('Invalid phone number or credentials.');
         }
 
         if (!data) {
@@ -267,8 +260,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
-        console.error('Login error:', error);
-        throw error;
+                throw error;
       }
 
       if (data.user) {
@@ -279,8 +271,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
       return false;
     } catch (error: any) {
-      console.error('Login caught error:', error);
-      const errorMessage = error.message || 'Invalid credentials.';
+            const errorMessage = error.message || 'Invalid credentials.';
       setLoginError(errorMessage);
       setIsLoading(false);
       return false;

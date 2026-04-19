@@ -55,8 +55,7 @@ export const OfflineProvider: React.FC<{ children: React.ReactNode }> = ({ child
           timestamp: new Date(item.timestamp)
         })));
       } catch (error) {
-        console.error('Error loading offline data:', error);
-      }
+              }
     }
 
     return () => {
@@ -80,16 +79,19 @@ export const OfflineProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const syncOfflineData = async () => {
     try {
-      // Here you would sync with your actual backend
-      // For now, we'll just clear the offline data
-      
-      // Simulate sync delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      const userId = localStorage.getItem('penny-count-user')
+        ? JSON.parse(localStorage.getItem('penny-count-user') || '{}')?.id
+        : null;
+
+      if (userId) {
+        const { offlineQueueService } = await import('../../services/offlineQueueService');
+        await offlineQueueService.syncQueue(userId);
+      }
+
       clearOfflineData();
       setShowSyncNotification(false);
     } catch (error) {
-      console.error('Error syncing offline data:', error);
+      // Sync failed silently - will retry next time
     }
   };
 

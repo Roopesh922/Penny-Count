@@ -56,8 +56,7 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
       setSelectedAgentIds([]);
       setExportOpen(true);
     } catch (e) {
-      console.error('Failed to load lines/agents for export', e);
-    }
+          }
   };
 
   const toggleSelectLine = (id: string) => {
@@ -100,8 +99,7 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
       window.URL.revokeObjectURL(url);
       setExportOpen(false);
     } catch (e) {
-      console.error('Export failed', e);
-      alert('Export failed: ' + (e instanceof Error ? e.message : String(e)));
+            alert('Export failed: ' + (e instanceof Error ? e.message : String(e)));
     }
   };
 
@@ -121,8 +119,7 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
             setLineCollections(lineWiseData);
           }
         } catch (error) {
-          console.error('Error loading dashboard metrics:', error);
-        } finally {
+                  } finally {
           setLoading(false);
         }
       }
@@ -156,7 +153,6 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
         const collectionRate = totalDisbursed > 0 ? Math.round((totalCollected / totalDisbursed) * 100) : 0;
         setMetrics(prev => prev ? ({ ...prev, cashOnHand, collectionEfficiency: collectionRate }) : prev);
       } catch (e) {
-        console.warn('Failed to compute agent metrics', e);
       }
     };
     computeAgentMetrics();

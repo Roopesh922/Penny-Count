@@ -119,8 +119,7 @@ export const LinesManagement: React.FC = () => {
       setLines([...lines, createdLine]);
       setShowCreateModal(false);
     } catch (error) {
-      console.error('Error creating line:', error);
-      showError(error);
+            showError(error);
     }
     finally { setOpLoading(false); }
   };
@@ -155,8 +154,7 @@ export const LinesManagement: React.FC = () => {
       setShowEditModal(false);
       setEditingLine(null);
     } catch (err: any) {
-      console.error('Failed to update line', err);
-      showError(err);
+            showError(err);
     } finally {
       setOpLoading(false);
     }
@@ -169,8 +167,7 @@ export const LinesManagement: React.FC = () => {
       await dataService.deleteLine(lineId);
       setLines(prev => prev.filter(line => line.id !== lineId));
     } catch (error: any) {
-      console.error('Error deleting line:', error);
-      showError(error);
+            showError(error);
     } finally {
       setOpLoading(false);
     }

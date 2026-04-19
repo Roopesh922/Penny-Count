@@ -68,14 +68,12 @@ export const Settings: React.FC = () => {
       } catch {}
 
       let fetched: any = null;
-      console.debug('Settings: trying candidate IDs for profile fetch', candidates);
       for (const cid of candidates) {
         if (!cid) continue;
         try {
           const cu = await dataService.getUserById(cid);
           if (cu) { fetched = cu; break; }
         } catch (err: any) {
-          console.debug('Settings: getUserById failed for', cid, err?.message || String(err));
           // If 404, try next candidate. For other errors, record and continue.
           if (String(err).includes('HTTP 404')) {
             continue;
@@ -166,8 +164,7 @@ export const Settings: React.FC = () => {
         window.location.href = '/';
       }, 1000);
     } catch (err: any) {
-      console.error('Delete account error:', err);
-      showToast(err.message || 'Failed to delete account. Please contact support.', 'error');
+            showToast(err.message || 'Failed to delete account. Please contact support.', 'error');
     } finally {
       setIsDeleting(false);
       setShowDeleteModal(false);

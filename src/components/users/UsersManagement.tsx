@@ -97,8 +97,7 @@ export const UsersManagement: React.FC = () => {
         .rpc('search_user_by_phone', { search_phone: phoneSearch });
 
       if (searchError) {
-        console.error('Search error:', searchError);
-        throw searchError;
+                throw searchError;
       }
 
       // Check if any user was found
@@ -141,8 +140,7 @@ export const UsersManagement: React.FC = () => {
         setNewUserData({ ...newUserData, phone: phoneSearch });
       }
     } catch (error: any) {
-      console.error('Phone search error:', error);
-      setError(error.message || 'Error searching user');
+            setError(error.message || 'Error searching user');
     } finally {
       setLoading(false);
     }
@@ -168,8 +166,7 @@ export const UsersManagement: React.FC = () => {
         resetModal();
       }, 2000);
     } catch (error: any) {
-      console.error('Error adding user to team:', error);
-      setError(error.message || 'Error adding user');
+            setError(error.message || 'Error adding user');
     } finally {
       setIsSubmitting(false);
     }
