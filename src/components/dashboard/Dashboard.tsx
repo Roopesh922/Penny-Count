@@ -7,6 +7,7 @@ import { DashboardMetrics } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLineContext } from '../../contexts/LineContext';
 import { dataService } from '../../services/dataService';
+import { useRealtimeLoans } from '../../hooks/useRealtimePayments';
 
 export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({ onViewAll }) => {
   const { user } = useAuth();
@@ -131,6 +132,14 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
     // Generate overdue notifications silently in background
     dataService.generateOverdueNotifications().catch(() => {});
   }, [user, selectedLine]);
+
+  // Real-time: reload dashboard when any loan updates
+  useRealtimeLoans(() => {
+    if (user?.id && user?.role) {
+      dataService.getDashboardMetrics(user.id, user.role, selectedLine?.id)
+        .then(setMetrics).catch(() => {});
+    }
+  });
 
   // If agent, ensure cashOnHand and collection metrics are accurate by computing from lines
   React.useEffect(() => {

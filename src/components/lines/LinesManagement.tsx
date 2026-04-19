@@ -6,7 +6,8 @@ import {
   Trash2,
   Users,
   UserCheck,
-  MoreVertical
+  MoreVertical,
+  Building2
 } from 'lucide-react';
 import { Line, User } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -216,6 +217,24 @@ export const LinesManagement: React.FC = () => {
 
       {/* Lines Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 w-full">
+        {filteredLines.length === 0 && (
+          <div className="col-span-full text-center py-16">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Building2 className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="text-gray-700 font-semibold text-lg">No lending lines yet</p>
+            <p className="text-gray-400 text-sm mt-1 mb-5">Create your first line to start managing loans</p>
+            {(user?.role === 'owner') && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Create First Line
+              </button>
+            )}
+          </div>
+        )}
         {filteredLines.map((line, index) => (
           <motion.div
             key={line.id}

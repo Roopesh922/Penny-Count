@@ -103,6 +103,12 @@ export const TopBar: React.FC<TopBarProps> = ({ title, onMenuClick }) => {
             <WifiOff className="w-3.5 h-3.5 flex-shrink-0" />
           )}
           <span>{isOnline ? t('online') : t('offline')}</span>
+          {isOnline && (
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-green-600 font-semibold">Live</span>
+            </span>
+          )}
         </div>
       </div>
 

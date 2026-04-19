@@ -165,7 +165,7 @@ export const Settings: React.FC = () => {
       }, 1000);
     } catch (err: any) {
       console.error('Delete account error:', err);
-      notify(err.message || 'Failed to delete account. Please contact support.');
+      showToast(err.message || 'Failed to delete account. Please contact support.', 'error');
     } finally {
       setIsDeleting(false);
       setShowDeleteModal(false);
@@ -274,7 +274,7 @@ export const Settings: React.FC = () => {
               } catch {}
               showToast('Profile updated', 'success');
             } catch (err: any) {
-              notify(err.message || 'Failed to update profile');
+              showToast(err.message || 'Failed to update profile', 'error');
             } finally {
               setSaving(false);
             }

@@ -129,13 +129,16 @@ export const ExpensesManagement: React.FC = () => {
 
 
 
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
   const handleDeleteExpense = async (expenseId: string) => {
-    if (!window.confirm('Delete this expense? This cannot be undone.')) return;
     try {
       await dataService.deleteExpense(expenseId);
       setExpenses(prev => prev.filter(e => e.id !== expenseId));
+      setConfirmDeleteId(null);
     } catch (err: any) {
       alert(err.message || 'Failed to delete expense');
+      setConfirmDeleteId(null);
     }
   };
 
@@ -489,13 +492,30 @@ export const ExpensesManagement: React.FC = () => {
                     </td>
                     {user?.role === 'owner' && (
                       <td className="px-4 py-4 text-sm">
-                        <button
-                          onClick={() => handleDeleteExpense(expense.id)}
-                          className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete expense"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {confirmDeleteId === expense.id ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleDeleteExpense(expense.id)}
+                              className="px-2 py-1 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmDeleteId(expense.id)}
+                            className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete expense"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </td>
                     )}
                   </motion.tr>

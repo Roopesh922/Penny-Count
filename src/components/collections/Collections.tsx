@@ -20,6 +20,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useLineContext } from '../../contexts/LineContext';
 import { dataService } from '../../services/dataService';
 import { useToast } from '../../contexts/ToastContext';
+import { useRealtimePayments } from '../../hooks/useRealtimePayments';
 
 export const Collections: React.FC = () => {
   const { t } = useLanguage();
@@ -31,6 +32,7 @@ export const Collections: React.FC = () => {
   const [borrowers, setBorrowers] = useState<{ [key: string]: Borrower }>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'today' | 'overdue'>('all');
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [paymentSchedule, setPaymentSchedule] = useState<PaymentSchedule[]>([]);
   const [showCollectionModal, setShowCollectionModal] = useState(false);
@@ -41,6 +43,12 @@ export const Collections: React.FC = () => {
   useEffect(() => {
     loadData();
   }, [selectedLine]);
+
+  // Real-time: reload when any payment is recorded for active loans
+  useRealtimePayments(
+    loans.map(l => l.id),
+    () => { loadData(); }
+  );
 
   const loadData = async () => {
     setLoading(true);
@@ -716,8 +724,31 @@ export const Collections: React.FC = () => {
         transition={{ delay: 0.2 }}
         className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
       >
+        {/* Quick filter tabs */}
+        <div className="flex gap-2 mb-4 overflow-x-auto">
+          {([
+            { id: 'all', label: 'All Loans' },
+            { id: 'today', label: `Due Today (${loans.filter(l => new Date(l.dueDate).toDateString() === new Date().toDateString()).length})` },
+            { id: 'overdue', label: `Overdue (${loans.filter(l => new Date(l.dueDate) < new Date()).length})` },
+          ] as const).map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                activeTab === tab.id
+                  ? tab.id === 'overdue' ? 'bg-red-600 text-white' : tab.id === 'today' ? 'bg-purple-600 text-white' : 'bg-teal-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
-          <h3 className="text-lg font-bold text-gray-900 sm:flex-1">All Active Loans</h3>
+          <h3 className="text-lg font-bold text-gray-900 sm:flex-1">
+            {activeTab === 'today' ? "Due Today" : activeTab === 'overdue' ? "Overdue Loans" : "All Active Loans"}
+          </h3>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -745,6 +776,14 @@ export const Collections: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {loans.filter(loan => {
+              // Tab filter
+              if (activeTab === 'today') {
+                const d = new Date(loan.dueDate);
+                if (d.toDateString() !== new Date().toDateString()) return false;
+              } else if (activeTab === 'overdue') {
+                if (new Date(loan.dueDate) >= new Date()) return false;
+              }
+              // Search filter
               if (!searchTerm) return true;
               const borrower = borrowers[loan.borrowerId];
               return borrower?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -323,7 +323,6 @@ export const UsersManagement: React.FC = () => {
   };
 
   const handleRejectUser = async (userId: string) => {
-    if (!window.confirm('Reject this user request? They will need to re-apply.')) return;
     try {
       const { error } = await (await import('../../lib/supabase')).supabase
         .rpc('approve_reject_user_request', { target_user_id: userId, action: 'rejected' });
