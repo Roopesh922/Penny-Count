@@ -30,7 +30,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           value: metrics.totalLines,
           icon: Building2,
           color: 'bg-blue-500',
-          change: t('thisMonth'),
+          change: `${metrics.totalLines} active`,
           trend: 'up'
         },
         {
@@ -38,7 +38,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           value: `₹${metrics.totalDisbursed?.toLocaleString()}`,
           icon: IndianRupee,
           color: 'bg-green-500',
-          change: t('fromLastMonth'),
+          change: `₹${((metrics.totalDisbursed || 0) / 100000).toFixed(1)}L total`,
           trend: 'up'
         },
         {
@@ -46,16 +46,16 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           value: `₹${metrics.totalCollected?.toLocaleString()}`,
           icon: Wallet,
           color: 'bg-emerald-500',
-          change: t('fromLastMonth'),
-          trend: 'up'
+          change: `${metrics.collectionEfficiency || 0}% efficiency`,
+          trend: metrics.collectionEfficiency >= 80 ? 'up' : 'down'
         },
         {
           title: t('netProfit'),
           value: `₹${metrics.profit?.toLocaleString()}`,
           icon: TrendingUp,
           color: 'bg-purple-500',
-          change: t('fromLastMonth'),
-          trend: 'up'
+          change: `₹${((metrics.cashOnHand || 0) / 100000).toFixed(1)}L cash on hand`,
+          trend: metrics.profit >= 0 ? 'up' : 'down'
         },
         {
           title: t('activeBorrowers'),

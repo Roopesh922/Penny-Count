@@ -101,7 +101,23 @@ export const Commissions: React.FC = () => {
   return (
     <div className="space-y-6 w-full max-w-full overflow-x-hidden">
       {error && <div className="bg-red-100 text-red-700 p-2 rounded">{error}</div>}
-      {loading && <div className="text-gray-500">Loading commissions...</div>}
+      {loading && (
+        <div className="space-y-3 animate-pulse">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[1,2,3,4].map(i => <div key={i} className="h-24 bg-gray-100 rounded-xl" />)}
+          </div>
+          {[1,2,3,4].map(i => (
+            <div key={i} className="flex items-center gap-4 bg-white rounded-xl border border-gray-100 p-4">
+              <div className="w-10 h-10 bg-gray-200 rounded-full flex-shrink-0" />
+              <div className="flex-1">
+                <div className="h-3 bg-gray-200 rounded w-1/3 mb-2" />
+                <div className="h-3 bg-gray-200 rounded w-1/2" />
+              </div>
+              <div className="h-5 bg-gray-200 rounded w-20" />
+            </div>
+          ))}
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Commissions</h1>
         <button

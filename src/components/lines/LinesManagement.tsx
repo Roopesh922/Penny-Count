@@ -176,7 +176,22 @@ export const LinesManagement: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="text-gray-500">{t('loading')}...</div>;
+    return (
+      <div className="space-y-4">
+        <div className="h-8 bg-gray-200 rounded-lg w-32 animate-pulse" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1,2,3].map(i => (
+            <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
+              <div className="h-5 bg-gray-200 rounded w-3/4 mb-3" />
+              <div className="h-3 bg-gray-200 rounded w-1/2 mb-4" />
+              <div className="grid grid-cols-2 gap-3">
+                {[1,2,3,4].map(j => <div key={j} className="h-12 bg-gray-100 rounded-lg" />)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (error) {
