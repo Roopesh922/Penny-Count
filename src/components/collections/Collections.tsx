@@ -197,6 +197,7 @@ export const Collections: React.FC = () => {
         const method = formData.get('method') as 'cash' | 'upi' | 'phonepe' | 'qr';
         const transactionId = formData.get('transactionId') as string;
 
+        const paymentDateStr = formData.get('paymentDate') as string;
         await dataService.createPayment({
           loanId: selectedLoan.id,
           borrowerId: selectedLoan.borrowerId,
@@ -204,6 +205,7 @@ export const Collections: React.FC = () => {
           amount,
           method,
           transactionId: transactionId || undefined,
+          paymentDate: paymentDateStr ? new Date(paymentDateStr) : new Date(),
           isOffline: false
         });
 
@@ -561,6 +563,18 @@ export const Collections: React.FC = () => {
                           name="transactionId"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
                           placeholder="For digital payments"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Payment Date
+                        </label>
+                        <input
+                          type="date"
+                          name="paymentDate"
+                          defaultValue={new Date().toISOString().split('T')[0]}
+                          max={new Date().toISOString().split('T')[0]}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
                         />
                       </div>
                     </div>

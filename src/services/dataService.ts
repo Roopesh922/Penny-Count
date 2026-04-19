@@ -736,7 +736,7 @@ class DataService {
     const insertData: any = {
       loan_id: payment.loanId,
       amount: payment.amount,
-      payment_date: payment.paymentDate || new Date().toISOString(),
+      payment_date: payment.paymentDate ? new Date(payment.paymentDate).toISOString() : new Date().toISOString(),
       collected_by: user?.id || payment.agentId,
       notes: payment.notes
     };

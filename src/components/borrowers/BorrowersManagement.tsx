@@ -44,6 +44,7 @@ const NewLoanModal: React.FC<NewLoanModalProps> = ({ borrower, user, lines, onCl
   const [finalAmount, setFinalAmount] = React.useState<string>('');
   const [tenure, setTenure] = React.useState<string>('30');
   const [interestRate, setInterestRate] = React.useState<string>('');
+  const [repaymentFreq, setRepaymentFreq] = React.useState<'daily' | 'weekly' | 'monthly'>('daily');
   const { push: pushToast } = useToast();
 
   const calculateInterestRate = () => {
@@ -108,7 +109,7 @@ const NewLoanModal: React.FC<NewLoanModalProps> = ({ borrower, user, lines, onCl
         amount: initial,
         interestRate: rate,
         tenure: tenureDays,
-        repaymentFrequency: 'daily' as const,
+        repaymentFrequency: repaymentFreq,
         totalAmount: Math.round(final),
         paidAmount: 0,
         remainingAmount: Math.round(final),
@@ -117,7 +118,6 @@ const NewLoanModal: React.FC<NewLoanModalProps> = ({ borrower, user, lines, onCl
       await dataService.createLoan(loanPayload);
       onSuccess();
     } catch (err) {
-      console.error('Failed to create loan', err);
       pushToast({ type: 'error', message: (err as any)?.message || 'Failed to create loan' });
     }
   };

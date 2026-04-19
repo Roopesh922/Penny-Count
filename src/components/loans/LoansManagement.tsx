@@ -22,99 +22,6 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { dataService } from '../../services/dataService';
 import { useToast } from '../../contexts/ToastContext';
 
-// Mock data
-const mockLoans: Loan[] = [
-  {
-    id: 'L001',
-    borrowerId: '1',
-    lineId: '1',
-    agentId: '3',
-    amount: 10000,
-    interestRate: 2.5,
-    tenure: 30,
-    repaymentFrequency: 'daily',
-    totalAmount: 10750,
-    paidAmount: 5000,
-    remainingAmount: 5750,
-    status: 'active',
-    disbursedAt: new Date('2024-02-01'),
-    dueDate: new Date('2024-03-02'),
-    nextPaymentDate: new Date('2024-02-02')
-  },
-  {
-    id: 'L002',
-    borrowerId: '2',
-    lineId: '1',
-    agentId: '3',
-    amount: 15000,
-    interestRate: 2.0,
-    tenure: 45,
-    repaymentFrequency: 'weekly',
-    totalAmount: 15675,
-    paidAmount: 15675,
-    remainingAmount: 0,
-    status: 'completed',
-    disbursedAt: new Date('2024-01-15'),
-    dueDate: new Date('2024-03-01'),
-    completedAt: new Date('2024-02-28'),
-    nextPaymentDate: new Date('2024-02-20')
-  },
-  {
-    id: 'L003',
-    borrowerId: '3',
-    lineId: '2',
-    agentId: '3',
-    amount: 8000,
-    interestRate: 3.0,
-    tenure: 20,
-    repaymentFrequency: 'daily',
-    totalAmount: 8480,
-    paidAmount: 2000,
-    remainingAmount: 6480,
-    status: 'overdue',
-    disbursedAt: new Date('2024-01-20'),
-    dueDate: new Date('2024-02-09'),
-    nextPaymentDate: new Date('2024-02-01')
-  },
-  {
-    id: 'L004',
-    borrowerId: '4',
-    lineId: '1',
-    agentId: '3',
-    amount: 12000,
-    interestRate: 2.2,
-    tenure: 35,
-    repaymentFrequency: 'weekly',
-    totalAmount: 12462,
-    paidAmount: 8000,
-    remainingAmount: 4462,
-    status: 'active',
-    disbursedAt: new Date('2024-02-10'),
-    dueDate: new Date('2024-03-16'),
-    nextPaymentDate: new Date('2024-02-11')
-  },
-  {
-    id: 'L005',
-    borrowerId: '5',
-    lineId: '2',
-    agentId: '3',
-    amount: 5000,
-    interestRate: 2.8,
-    tenure: 15,
-    repaymentFrequency: 'daily',
-    totalAmount: 5210,
-    paidAmount: 0,
-    remainingAmount: 5210,
-    status: 'defaulted',
-    disbursedAt: new Date('2024-01-10'),
-    dueDate: new Date('2024-01-25'),
-    nextPaymentDate: new Date('2024-01-11')
-  }
-];
-
-// Local borrower cache populated from backend
-const emptyBorrowerMap: { [key: string]: string } = {};
-
 export const LoansManagement: React.FC = () => {
   const { user } = useAuth();
   const { selectedLine } = useLineContext();
@@ -129,7 +36,7 @@ export const LoansManagement: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showRestructureModal, setShowRestructureModal] = useState(false);
   const [isRestructuring, setIsRestructuring] = useState(false);
-  const [borrowerMap, setBorrowerMap] = useState<{ [key: string]: string }>(emptyBorrowerMap);
+  const [borrowerMap, setBorrowerMap] = useState<{ [key: string]: string }>({});
   const { push: pushToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -146,7 +53,11 @@ export const LoansManagement: React.FC = () => {
           dataService.getBorrowers(),
           dataService.getLines()
         ]);
-        setLoans(loansData);
+        // Filter by selected line if one is active
+        const filtered = selectedLine
+          ? loansData.filter(l => l.lineId === selectedLine.id)
+          : loansData;
+        setLoans(filtered);
         setLines(linesData);
         const map: { [key: string]: string } = {};
         borrowersData.forEach((br: Borrower) => { map[br.id] = br.name; });
@@ -160,7 +71,7 @@ export const LoansManagement: React.FC = () => {
     };
 
     loadData();
-  }, []);
+  }, [selectedLine]);
 
   const filteredLoans = loans.filter(loan => {
   const borrowerName = borrowerMap[loan.borrowerId] || '';

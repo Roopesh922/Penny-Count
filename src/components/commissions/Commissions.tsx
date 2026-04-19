@@ -14,14 +14,9 @@ import {
 import { Commission } from '../../types';
 import { dataService } from '../../services/dataService';
 
-const lineNames: { [key: string]: string } = {
-  '1': 'Line A - Central Market',
-  '2': 'Line B - Industrial Area',
-  '3': 'Line C - Residential Zone'
-};
-
 export const Commissions: React.FC = () => {
   const [commissions, setCommissions] = useState<Commission[]>([]);
+  const [lines, setLines] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [periodFilter, setPeriodFilter] = useState<string>('all');
@@ -34,8 +29,12 @@ export const Commissions: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const commissionsData = await dataService.getCommissions();
+        const [commissionsData, linesData] = await Promise.all([
+          dataService.getCommissions(),
+          dataService.getLines()
+        ]);
         setCommissions(commissionsData);
+        setLines(linesData.map(l => ({ id: l.id, name: l.name })));
       } catch (err: any) {
         setError(err.message || 'Error loading commissions');
       } finally {
@@ -224,8 +223,8 @@ export const Commissions: React.FC = () => {
           <div>
             <h4 className="font-medium text-gray-700 mb-3">Line Breakdown</h4>
             <div className="space-y-2">
-              {Object.entries(lineNames).map(([lineId, lineName]) => {
-                const lineCommissions = commissions.filter(c => c.lineId === lineId && c.period === '2024-02');
+              {lines.map(line => { const lineId = line.id; const lineName = line.name;
+                const lineCommissions = commissions.filter(c => c.lineId === line.id && (periodFilter === 'all' || getPeriodKey(c) === periodFilter));
                 const lineTotal = lineCommissions.reduce((sum, c) => sum + c.amount, 0);
                 return lineTotal > 0 ? (
                   <div key={lineId} className="flex justify-between items-center">
@@ -259,8 +258,17 @@ export const Commissions: React.FC = () => {
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
             >
               <option value="all">All Periods</option>
-              <option value="2024-02">February 2024</option>
-              <option value="2024-01">January 2024</option>
+{(() => {
+                const opts = [];
+                for (let i = 0; i < 6; i++) {
+                  const d = new Date();
+                  d.setMonth(d.getMonth() - i);
+                  const key = d.toISOString().substring(0, 7);
+                  const label = d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+                  opts.push(<option key={key} value={key}>{label}</option>);
+                }
+                return opts;
+              })()}
             </select>
           </div>
           <div className="flex items-center space-x-2">
@@ -314,7 +322,7 @@ export const Commissions: React.FC = () => {
                   <td className="py-4 px-6">
                     <div className="flex items-center space-x-2">
                       <Building2 className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-800">{lineNames[commission.lineId]}</span>
+                      <span className="text-gray-800">{lines.find(l => l.id === commission.lineId)?.name || commission.lineId}</span>
                     </div>
                   </td>
                   <td className="py-4 px-6">
