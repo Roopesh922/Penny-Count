@@ -415,14 +415,16 @@ export const Settings: React.FC = () => {
         </div>
         <div>
           <motion.button onClick={async () => {
-            if (!profile) return showToast('No profile loaded', 'success');
-            if (passwords.newPassword !== passwords.confirm) return showToast('Passwords do not match', 'success');
+            if (!profile) return showToast('No profile loaded', 'error');
+            if (passwords.newPassword.length < 8) return showToast('Password must be at least 8 characters', 'error');
+            if (passwords.newPassword !== passwords.confirm) return showToast('Passwords do not match', 'error');
             setSaving(true);
             try {
-              await dataService.updateUser(profile.id || profile._id, ({ password: passwords.newPassword } as any));
-              showToast('Password changed', 'success');
+              const { error } = await supabase.auth.updateUser({ password: passwords.newPassword });
+              if (error) throw error;
+              showToast('Password changed successfully', 'success');
               setPasswords({ current: '', newPassword: '', confirm: '' });
-            } catch (err: any) { notify(err.message || 'Failed to change password'); }
+            } catch (err: any) { showToast(err.message || 'Failed to change password', 'error'); }
             setSaving(false);
           }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="bg-blue-500 text-white px-4 py-2 rounded">Change Password</motion.button>
         </div>

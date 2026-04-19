@@ -94,37 +94,51 @@ export const DailyMonitoring: React.FC = () => {
 
       let lineFilter = selectedLine !== 'all' ? selectedLine : undefined;
 
-      const [paymentsData, loansData, expensesData] = await Promise.all([
+      const [paymentsData, loansData, expensesData, borrowersData, usersData] = await Promise.all([
         fetchPayments(startOfDay, endOfDay, lineFilter),
         fetchLoans(startOfDay, endOfDay, lineFilter),
-        fetchExpenses(startOfDay, endOfDay, lineFilter)
+        fetchExpenses(startOfDay, endOfDay, lineFilter),
+        dataService.getBorrowers(),
+        dataService.getUsers()
       ]);
+
+      const borrowerMap: Record<string, string> = {};
+      borrowersData.forEach((b: any) => { borrowerMap[b.id] = b.name; });
+      const userMap: Record<string, string> = {};
+      usersData.forEach((u: any) => { userMap[u.id] = u.name; });
 
       const openingBalance = await calculateOpeningBalance(startOfDay, lineFilter);
 
       const collections = paymentsData
         .filter(p => p.payment_date && new Date(p.payment_date) >= startOfDay && new Date(p.payment_date) <= endOfDay)
-        .map(p => ({
-          id: p.id,
-          time: new Date(p.payment_date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-          description: `Payment for Loan`,
-          amount: Number(p.amount),
-          type: 'credit' as const,
-          category: 'Collection',
-          reference: p.transaction_id || '',
-          agent: p.collected_by || ''
-        }));
+        .map(p => {
+          const borrowerName = borrowerMap[p.borrower_id] || '';
+          const agentName = userMap[p.collected_by] || '';
+          return {
+            id: p.id,
+            time: new Date(p.payment_date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+            description: borrowerName ? `${borrowerName}${agentName ? ` via ${agentName}` : ''}` : 'Payment collected',
+            amount: Number(p.amount),
+            type: 'credit' as const,
+            category: 'Collection',
+            reference: p.transaction_id || '',
+            agent: agentName
+          };
+        });
 
-      const disbursements = loansData.map(l => ({
-        id: l.id,
-        time: new Date(l.disbursed_date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-        description: `Loan Disbursed`,
-        amount: Number(l.principal),
-        type: 'debit' as const,
-        category: 'Disbursement',
-        reference: l.id,
-        agent: ''
-      }));
+      const disbursements = loansData.map((l: any) => {
+        const borrowerName = borrowerMap[l.borrower_id] || '';
+        return {
+          id: l.id,
+          time: new Date(l.disbursed_date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+          description: borrowerName ? `Loan to ${borrowerName}` : 'Loan Disbursed',
+          amount: Number(l.principal),
+          type: 'debit' as const,
+          category: 'Disbursement',
+          reference: l.id,
+          agent: ''
+        };
+      });
 
       const expenseTransactions = expensesData.map(e => ({
         id: e.id,

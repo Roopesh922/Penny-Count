@@ -72,7 +72,6 @@ export const ExpensesManagement: React.FC = () => {
       setCategories(categoriesData);
       setLines(linesData);
     } catch (error) {
-      console.error('Error loading data:', error);
     } finally {
       setLoading(false);
     }
@@ -123,13 +122,22 @@ export const ExpensesManagement: React.FC = () => {
       });
       loadData();
     } catch (error) {
-      console.error('Error creating expense:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
 
+
+  const handleDeleteExpense = async (expenseId: string) => {
+    if (!window.confirm('Delete this expense? This cannot be undone.')) return;
+    try {
+      await dataService.deleteExpense(expenseId);
+      setExpenses(prev => prev.filter(e => e.id !== expenseId));
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete expense');
+    }
+  };
 
   const filteredExpenses = expenses.filter(expense => {
     const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -400,9 +408,25 @@ export const ExpensesManagement: React.FC = () => {
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Amount</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Payment Method</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Receipt</th>
+                {user?.role === 'owner' && (
+                  <th className="px-4 py-4 text-left text-sm font-semibold text-gray-700"></th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
+              {filteredExpenses.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center">
+                    <Receipt className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500 font-medium">No expenses found</p>
+                    <p className="text-gray-400 text-sm mt-1">
+                      {searchTerm || selectedAgent !== 'all' || selectedCategory !== 'all'
+                        ? 'Try adjusting your filters'
+                        : 'Add your first expense to get started'}
+                    </p>
+                  </td>
+                </tr>
+              )}
               {filteredExpenses.map((expense) => {
                 const category = categories.find(c => c.id === expense.categoryId);
                 return (
@@ -463,6 +487,17 @@ export const ExpensesManagement: React.FC = () => {
                         <span className="text-gray-400 text-xs">No receipt</span>
                       )}
                     </td>
+                    {user?.role === 'owner' && (
+                      <td className="px-4 py-4 text-sm">
+                        <button
+                          onClick={() => handleDeleteExpense(expense.id)}
+                          className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete expense"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    )}
                   </motion.tr>
                 );
               })}

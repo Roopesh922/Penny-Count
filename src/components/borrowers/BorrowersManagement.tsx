@@ -14,6 +14,7 @@ import {
   CreditCard,
   TrendingUp,
   Users,
+  UserCheck,
   UserX,
   Wallet,
   Upload,
@@ -721,6 +722,32 @@ export const BorrowersManagement: React.FC = () => {
 
       {/* Borrowers Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full">
+        {filteredBorrowers.length === 0 && (
+          <div className="col-span-full text-center py-16">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <UserCheck className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="text-gray-700 font-semibold text-lg">
+              {searchTerm || riskFilter !== 'all'
+                ? 'No borrowers match your filters'
+                : 'No borrowers yet'}
+            </p>
+            <p className="text-gray-400 text-sm mt-1 mb-5">
+              {searchTerm || riskFilter !== 'all'
+                ? 'Try adjusting your search or filters'
+                : 'Add your first borrower to get started'}
+            </p>
+            {!searchTerm && riskFilter === 'all' && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Add First Borrower
+              </button>
+            )}
+          </div>
+        )}
         {filteredBorrowers.map((borrower, index) => (
           <motion.div
             key={borrower.id}

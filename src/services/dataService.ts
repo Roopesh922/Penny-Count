@@ -1627,6 +1627,14 @@ class DataService {
     };
   }
 
+  async deleteExpense(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('expenses')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+  }
+
   async updateExpense(id: string, updates: any): Promise<any> {
     const { data, error } = await supabase
       .from('expenses')

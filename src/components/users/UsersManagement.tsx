@@ -311,6 +311,29 @@ export const UsersManagement: React.FC = () => {
     }
   };
 
+  const handleApproveUser = async (userId: string) => {
+    try {
+      const { error } = await (await import('../../lib/supabase')).supabase
+        .rpc('approve_reject_user_request', { target_user_id: userId, action: 'approved' });
+      if (error) throw error;
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, approvalStatus: 'approved' } : u));
+    } catch (err: any) {
+      setError(err.message || 'Failed to approve user');
+    }
+  };
+
+  const handleRejectUser = async (userId: string) => {
+    if (!window.confirm('Reject this user request? They will need to re-apply.')) return;
+    try {
+      const { error } = await (await import('../../lib/supabase')).supabase
+        .rpc('approve_reject_user_request', { target_user_id: userId, action: 'rejected' });
+      if (error) throw error;
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, approvalStatus: 'rejected' } : u));
+    } catch (err: any) {
+      setError(err.message || 'Failed to reject user');
+    }
+  };
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.phone.includes(searchTerm);
@@ -581,7 +604,27 @@ export const UsersManagement: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1">
+                      {user.approvalStatus === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleApproveUser(user.id)}
+                            className="px-2 py-1 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex items-center gap-1"
+                            title="Approve"
+                          >
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleRejectUser(user.id)}
+                            className="px-2 py-1 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-1"
+                            title="Reject"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            Reject
+                          </button>
+                        </>
+                      )}
                       <button
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         title="Edit User"
