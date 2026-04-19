@@ -142,8 +142,20 @@ export const NotificationCenter: React.FC = () => {
                     animate={{ opacity: 1, x: 0 }}
                     className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${
                       !notification.isRead ? 'bg-blue-50' : ''
+                    } ${
+                      notification.type === 'payment_overdue' ? 'border-l-2 border-l-red-400' :
+                      notification.type === 'payment_due' ? 'border-l-2 border-l-amber-400' : ''
                     }`}
-                    onClick={() => markAsRead(notification.id)}
+                    onClick={() => {
+                      markAsRead(notification.id);
+                      if (notification.type === 'payment_overdue' || notification.type === 'payment_due') {
+                        window.dispatchEvent(new CustomEvent('navigate', { detail: { section: 'collections' } }));
+                        setIsOpen(false);
+                      } else if (notification.type === 'loan_approved') {
+                        window.dispatchEvent(new CustomEvent('navigate', { detail: { section: 'loans' } }));
+                        setIsOpen(false);
+                      }
+                    }}
                   >
                     <div className="flex items-start space-x-3">
                       <div className={`p-2 rounded-full bg-gray-100 ${getNotificationColor(notification.type)}`}>

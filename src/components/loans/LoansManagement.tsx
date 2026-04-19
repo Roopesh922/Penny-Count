@@ -515,30 +515,52 @@ export const LoansManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredLoans.map((loan, index) => (
+              {filteredLoans.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="py-16 text-center">
+                    <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500 font-medium">
+                      {searchTerm || statusFilter !== 'all' ? 'No loans match your filters' : 'No loans yet'}
+                    </p>
+                    <p className="text-gray-400 text-sm mt-1">
+                      {searchTerm || statusFilter !== 'all'
+                        ? 'Try adjusting your search or status filter'
+                        : 'Create your first loan to get started'}
+                    </p>
+                  </td>
+                </tr>
+              )}
+              {filteredLoans.map((loan, index) => {
+                const isOverdue = loan.status === 'active' && new Date(loan.dueDate) < new Date();
+                const daysUntilDue = Math.ceil((new Date(loan.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                const isDueSoon = loan.status === 'active' && daysUntilDue >= 0 && daysUntilDue <= 7;
+                return (
                 <motion.tr
                   key={loan.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="hover:bg-gray-50 transition-colors"
+                  className={`transition-colors ${
+                    isOverdue ? 'bg-red-50 hover:bg-red-100' :
+                    isDueSoon ? 'bg-amber-50 hover:bg-amber-100' :
+                    'hover:bg-gray-50'
+                  }`}
                 >
                   <td className="py-4 px-6">
                     <div>
-                      <p className="font-medium text-gray-800">{loan.id}</p>
-                      <p className="text-sm text-gray-500">{loan.repaymentFrequency}</p>
+                      <p className="font-medium text-gray-800">{loan.id.slice(-8)}</p>
+                      <p className="text-sm text-gray-500 capitalize">{loan.repaymentFrequency}</p>
                     </div>
                   </td>
                   <td className="py-4 px-6">
                     <div>
-                      <p className="font-medium text-gray-800">{borrowerMap[loan.borrowerId] || loan.borrowerId}</p>
-                      {/* ID removed - show only borrower name for clarity */}
+                      <p className="font-medium text-gray-800">{borrowerMap[loan.borrowerId] || 'Unknown'}</p>
                     </div>
                   </td>
                   <td className="py-4 px-6">
                     <div>
                       <p className="font-medium text-gray-800">₹{loan.amount.toLocaleString()}</p>
-                      <p className="text-sm text-gray-500">{loan.interestRate}% interest</p>
+                      <p className="text-sm text-gray-500">{loan.interestRate.toFixed(1)}% interest</p>
                     </div>
                   </td>
                   <td className="py-4 px-6">
@@ -548,9 +570,9 @@ export const LoansManagement: React.FC = () => {
                         <span className="text-gray-600">₹{loan.totalAmount.toLocaleString()}</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${Math.min(100, Math.max(0, Number(calculateProgress(loan))) )}%` }}
+                        <div
+                          className={`h-2 rounded-full transition-all duration-300 ${isOverdue ? 'bg-red-500' : 'bg-emerald-500'}`}
+                          style={{ width: `${Math.min(100, Math.max(0, Number(calculateProgress(loan))))}%` }}
                         />
                       </div>
                       <p className="text-xs text-gray-500">{Number(calculateProgress(loan)).toFixed(1)}% completed</p>
@@ -558,14 +580,22 @@ export const LoansManagement: React.FC = () => {
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-800">{loan.dueDate.toLocaleDateString()}</span>
+                      <Calendar className={`w-4 h-4 ${isOverdue ? 'text-red-500' : isDueSoon ? 'text-amber-500' : 'text-gray-400'}`} />
+                      <div>
+                        <span className={`text-sm font-medium ${isOverdue ? 'text-red-700' : isDueSoon ? 'text-amber-700' : 'text-gray-800'}`}>
+                          {new Date(loan.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' })}
+                        </span>
+                        {isOverdue && <p className="text-xs text-red-600 font-medium">{Math.abs(daysUntilDue)}d overdue</p>}
+                        {isDueSoon && !isOverdue && <p className="text-xs text-amber-600 font-medium">Due in {daysUntilDue}d</p>}
+                      </div>
                     </div>
                   </td>
                   <td className="py-4 px-6">
-                    <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(loan.status)}`}>
-                      {getStatusIcon(loan.status)}
-                      <span className="capitalize">{loan.status}</span>
+                    <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-sm font-medium ${
+                      isOverdue && loan.status === 'active' ? 'bg-red-100 text-red-700' : getStatusColor(loan.status)
+                    }`}>
+                      {getStatusIcon(isOverdue && loan.status === 'active' ? 'overdue' : loan.status)}
+                      <span className="capitalize">{isOverdue && loan.status === 'active' ? 'overdue' : loan.status}</span>
                     </span>
                   </td>
                   <td className="py-4 px-6">
@@ -604,7 +634,8 @@ export const LoansManagement: React.FC = () => {
                     </div>
                   </td>
                 </motion.tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
             </div>

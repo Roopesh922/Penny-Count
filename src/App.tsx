@@ -44,6 +44,17 @@ const AppContent: React.FC = () => {
     return () => window.removeEventListener('navigate', handler as EventListener);
   }, []);
 
+  // Handle PWA shortcut URL params (?section=collections etc.)
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const section = params.get('section');
+    if (section) {
+      setActiveSection(section);
+      // Clean the URL without reload
+      window.history.replaceState({}, '', '/');
+    }
+  }, []);
+
   // Check if we're on the password reset page
   const isResetPasswordPage = window.location.pathname === '/reset-password' || window.location.hash.includes('type=recovery');
 

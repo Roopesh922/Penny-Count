@@ -94,12 +94,13 @@ export const DailyMonitoring: React.FC = () => {
 
       let lineFilter = selectedLine !== 'all' ? selectedLine : undefined;
 
-      const [paymentsData, loansData, expensesData, borrowersData, usersData] = await Promise.all([
+      const [paymentsData, loansData, expensesData, borrowersData, usersData, withdrawalsData] = await Promise.all([
         fetchPayments(startOfDay, endOfDay, lineFilter),
         fetchLoans(startOfDay, endOfDay, lineFilter),
         fetchExpenses(startOfDay, endOfDay, lineFilter),
         dataService.getBorrowers(),
-        dataService.getUsers()
+        dataService.getUsers(),
+        dataService.getWithdrawals(lineFilter, selectedDate)
       ]);
 
       const borrowerMap: Record<string, string> = {};
@@ -155,8 +156,9 @@ export const DailyMonitoring: React.FC = () => {
       const totalDisbursements = disbursements.reduce((sum, d) => sum + d.amount, 0);
       const totalExpenses = expenseTransactions.reduce((sum, e) => sum + e.amount, 0);
 
-      const closingBalance = openingBalance + totalCollections - totalDisbursements - totalExpenses;
-      const netBalance = totalCollections - totalDisbursements - totalExpenses;
+      const totalWithdrawals = withdrawalsData.reduce((sum: number, w: any) => sum + Number(w.amount), 0);
+      const closingBalance = openingBalance + totalCollections - totalDisbursements - totalExpenses - totalWithdrawals;
+      const netBalance = totalCollections - totalDisbursements - totalExpenses - totalWithdrawals;
 
       const sheet: DailyBalanceSheet = {
         date: new Date(selectedDate),
@@ -167,12 +169,21 @@ export const DailyMonitoring: React.FC = () => {
         qrPayments: [],
         disbursements,
         expenses: expenseTransactions,
-        withdrawals: [],
+        withdrawals: withdrawalsData.map((w: any) => ({
+          id: w.id,
+          time: new Date(w.withdrawalDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+          description: `Withdrawal: ${w.reason || ''}${w.withdrawnByName ? ` by ${w.withdrawnByName}` : ''}`,
+          amount: Number(w.amount),
+          type: 'debit' as const,
+          category: 'Withdrawal',
+          reference: w.id,
+          agent: w.withdrawnByName || ''
+        })),
         totalCollections,
         totalQrPayments: 0,
         totalDisbursements,
         totalExpenses,
-        totalWithdrawals: 0,
+        totalWithdrawals: withdrawalsData.reduce((sum: number, w: any) => sum + Number(w.amount), 0),
         closingBalance,
         netBalance,
         isLocked: false
