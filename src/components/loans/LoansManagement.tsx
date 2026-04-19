@@ -127,6 +127,8 @@ export const LoansManagement: React.FC = () => {
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showRestructureModal, setShowRestructureModal] = useState(false);
+  const [isRestructuring, setIsRestructuring] = useState(false);
   const [borrowerMap, setBorrowerMap] = useState<{ [key: string]: string }>(emptyBorrowerMap);
   const { push: pushToast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -915,10 +917,11 @@ export const LoansManagement: React.FC = () => {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    onClick={() => { setShowDetailsModal(false); setShowRestructureModal(true); }}
                     className="bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2"
                   >
                     <Edit className="w-5 h-5" />
-                    <span>Edit Terms</span>
+                    <span>Restructure</span>
                   </motion.button>
                 </div>
               )}
@@ -1132,6 +1135,78 @@ export const LoansManagement: React.FC = () => {
                 </button>
               </div>
             </form>
+          </motion.div>
+        </div>
+      )}
+    </div>
+
+      {/* Restructure Loan Modal */}
+      {showRestructureModal && selectedLoan && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full"
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-xl font-bold text-gray-800">Restructure Loan</h2>
+                <button onClick={() => setShowRestructureModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5 text-sm text-amber-800">
+                <p className="font-semibold mb-1">Current terms</p>
+                <p>Tenure: {selectedLoan.tenure} months · Remaining: ₹{selectedLoan.remainingAmount.toLocaleString()} · Due: {new Date(selectedLoan.dueDate).toLocaleDateString()}</p>
+              </div>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setIsRestructuring(true);
+                  const fd = new FormData(e.currentTarget);
+                  const newTenure = parseInt(fd.get('newTenure') as string);
+                  const reason = fd.get('reason') as string;
+                  try {
+                    await dataService.updateLoan(selectedLoan.id, { tenure: newTenure });
+                    await dataService.createMissedPayment({
+                      loanId: selectedLoan.id,
+                      borrowerId: selectedLoan.borrowerId,
+                      expectedDate: new Date(),
+                      amountExpected: 0,
+                      reason: `Loan restructured: ${reason}`,
+                    });
+                    setLoans(loans.map(l => l.id === selectedLoan.id ? { ...l, tenure: newTenure } : l));
+                    pushToast({ type: 'success', message: 'Loan restructured successfully' });
+                    setShowRestructureModal(false);
+                  } catch (err: any) {
+                    pushToast({ type: 'error', message: err.message || 'Failed to restructure loan' });
+                  } finally {
+                    setIsRestructuring(false);
+                  }
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">New Tenure (months) *</label>
+                  <input type="number" name="newTenure" required min={1} max={120}
+                    defaultValue={selectedLoan.tenure + 3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Reason for restructuring *</label>
+                  <textarea name="reason" required rows={3} placeholder="e.g. Borrower facing financial difficulty..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none resize-none" />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={() => setShowRestructureModal(false)}
+                    className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={isRestructuring}
+                    className="flex-1 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors disabled:opacity-50">
+                    {isRestructuring ? 'Saving...' : 'Confirm Restructure'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </motion.div>
         </div>
       )}

@@ -2069,4 +2069,53 @@ class DataService {
   }
 }
 
+  async createNotification(userId: string, type: string, title: string, message: string): Promise<void> {
+    try {
+      await supabase.from('notifications').insert({
+        user_id: userId,
+        type,
+        title,
+        message,
+        is_read: false
+      });
+    } catch (e) {
+      // Notifications are non-critical - swallow errors
+    }
+  }
+
+  async generateOverdueNotifications(): Promise<void> {
+    try {
+      const loans = await this.getLoans();
+      const now = new Date();
+      const overdueLoans = loans.filter(l =>
+        l.status === 'active' &&
+        new Date(l.dueDate) < now &&
+        l.remainingAmount > 0
+      );
+
+      for (const loan of overdueLoans) {
+        const { data: existing } = await supabase
+          .from('notifications')
+          .select('id')
+          .eq('type', 'payment_overdue')
+          .contains('message', loan.id)
+          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+          .maybeSingle();
+
+        if (!existing && loan.agentId) {
+          const daysOverdue = Math.floor((now.getTime() - new Date(loan.dueDate).getTime()) / (1000 * 60 * 60 * 24));
+          await this.createNotification(
+            loan.agentId,
+            'payment_overdue',
+            'Loan Overdue',
+            `Loan ${loan.id} is ${daysOverdue} day(s) overdue. Remaining: ₹${loan.remainingAmount.toLocaleString()}`
+          );
+        }
+      }
+    } catch (e) {
+      // Non-critical
+    }
+  }
+}
+
 export const dataService = new DataService();

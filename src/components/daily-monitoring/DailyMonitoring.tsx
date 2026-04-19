@@ -234,12 +234,58 @@ export const DailyMonitoring: React.FC = () => {
   };
 
   const handleLockBalanceSheet = async () => {
-    setSuccess('Balance sheet locked successfully!');
+    if (!balanceSheet) return;
+    try {
+      const account = await dataService.getDailyAccount(selectedDate, balanceSheet.lineId);
+      if (account?.id) {
+        await dataService.updateDailyAccount(account.id, {
+          isLocked: true,
+          lockedBy: user?.id,
+          lockedAt: new Date().toISOString()
+        });
+        setBalanceSheet(prev => prev ? { ...prev, isLocked: true } : prev);
+        setSuccess('Balance sheet locked successfully!');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to lock balance sheet');
+    }
     setTimeout(() => setSuccess(null), 3000);
   };
 
   const handleExportBalanceSheet = () => {
-    setSuccess('Balance sheet exported successfully!');
+    if (!balanceSheet) return;
+    const rows: string[][] = [];
+    const fmt = (n: number) => n.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    const dateLabel = new Date(selectedDate).toLocaleDateString('en-IN');
+    const lineName = balanceSheet.lineName || 'All Lines';
+
+    rows.push([`Daily Balance Sheet - ${dateLabel} - ${lineName}`]);
+    rows.push([]);
+    rows.push(['Summary']);
+    rows.push(['Opening Balance', '', fmt(balanceSheet.openingBalance)]);
+    rows.push(['Total Collections', '', fmt(balanceSheet.totalCollections)]);
+    rows.push(['Total Disbursements', '', fmt(balanceSheet.totalDisbursements)]);
+    rows.push(['Total Expenses', '', fmt(balanceSheet.totalExpenses)]);
+    rows.push(['Closing Balance', '', fmt(balanceSheet.closingBalance)]);
+    rows.push([]);
+    rows.push(['Collections Detail', 'Time', 'Amount']);
+    balanceSheet.collections.forEach(c => rows.push([c.description, c.time, fmt(c.amount)]));
+    rows.push([]);
+    rows.push(['Disbursements Detail', 'Time', 'Amount']);
+    balanceSheet.disbursements.forEach(d => rows.push([d.description, d.time, fmt(d.amount)]));
+    rows.push([]);
+    rows.push(['Expenses Detail', 'Time', 'Amount']);
+    balanceSheet.expenses.forEach(e => rows.push([e.description, e.time, fmt(e.amount)]));
+
+    const csv = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `balance-sheet-${selectedDate}-${lineName.replace(/\s+/g, '-')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setSuccess('Balance sheet exported!');
     setTimeout(() => setSuccess(null), 3000);
   };
 
@@ -325,6 +371,20 @@ export const DailyMonitoring: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {loading && !balanceSheet && (
+        <div className="space-y-4 animate-pulse">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[1,2,3,4].map(i => <div key={i} className="h-32 bg-gray-100 rounded-2xl" />)}
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+            <div className="h-6 bg-gray-200 rounded w-40" />
+            <div className="grid grid-cols-2 gap-4">
+              {[1,2,3,4,5,6].map(i => <div key={i} className="h-12 bg-gray-100 rounded-xl" />)}
+            </div>
+          </div>
+        </div>
+      )}
 
       {balanceSheet && (
         <>
