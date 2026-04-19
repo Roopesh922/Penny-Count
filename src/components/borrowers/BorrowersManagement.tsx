@@ -1195,6 +1195,10 @@ export const BorrowersManagement: React.FC = () => {
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          setShowDetailsModal(false);
+                          window.dispatchEvent(new CustomEvent('navigate', { detail: { section: 'collections' } }));
+                        }}
                         className="flex-1 bg-blue-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2"
                       >
                         <TrendingUp className="w-5 h-5" />

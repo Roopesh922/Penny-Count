@@ -27,6 +27,17 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
     } else if (action === 'add-borrower') {
       onViewAll?.('borrowers');
     } else if (action === 'sync-data') {
+      // Trigger offline queue sync
+      try {
+        const userId = user?.id;
+        if (userId) {
+          const { offlineQueueService } = await import('../../services/offlineQueueService');
+          await offlineQueueService.syncQueue(userId);
+          showToast('Data synced successfully', 'success');
+        }
+      } catch {
+        showToast('Sync failed — will retry automatically', 'error');
+      }
     } else if (action === 'create-line') {
       onViewAll?.('lines');
     } else if (action === 'add-agent') {

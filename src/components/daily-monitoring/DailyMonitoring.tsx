@@ -251,6 +251,30 @@ export const DailyMonitoring: React.FC = () => {
   };
 
   const calculateOpeningBalance = async (date: Date, lineId?: string) => {
+    // Try to get yesterday's closing balance from daily_accounts
+    const yesterday = new Date(date);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yDate = yesterday.toISOString().split('T')[0];
+    try {
+      const yAccount = await dataService.getDailyAccount(yDate, lineId);
+      if (yAccount?.openingBalance !== undefined) {
+        // Yesterday's account exists - compute its closing
+        const [yPay, yLoans, yExp, yWith] = await Promise.all([
+          fetchPayments(new Date(yDate + 'T00:00:00'), new Date(yDate + 'T23:59:59'), lineId),
+          fetchLoans(new Date(yDate + 'T00:00:00'), new Date(yDate + 'T23:59:59'), lineId),
+          fetchExpenses(new Date(yDate + 'T00:00:00'), new Date(yDate + 'T23:59:59'), lineId),
+          dataService.getWithdrawals(lineId, yDate)
+        ]);
+        const yClose = yAccount.openingBalance
+          + yPay.reduce((s: number, p: any) => s + Number(p.amount), 0)
+          - yLoans.reduce((s: number, l: any) => s + Number(l.principal), 0)
+          - yExp.reduce((s: number, e: any) => s + Number(e.amount), 0)
+          - yWith.reduce((s: number, w: any) => s + Number(w.amount), 0);
+        return yClose;
+      }
+    } catch {
+      // Fall through to current balance
+    }
     if (lineId) {
       const line = lines.find(l => l.id === lineId);
       return line?.currentBalance || 0;

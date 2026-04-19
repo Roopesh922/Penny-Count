@@ -22,7 +22,7 @@ import { dataService } from '../../services/dataService';
 import { supabase } from '../../lib/supabase';
 
 export const Settings: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('profile');
   const [showPassword, setShowPassword] = useState(false);
@@ -303,6 +303,8 @@ export const Settings: React.FC = () => {
             try {
               const updated = await dataService.updateUser(profile.id || profile._id, { name: editValues.name, phone: editValues.phone, email: editValues.email } as any);
               setProfile(updated);
+              // Refresh AuthContext so sidebar/topbar update immediately
+              await refreshUser();
               // persist to auth localStorage if present
               try {
                 const stored = localStorage.getItem('penny-count-user');

@@ -29,6 +29,7 @@ export const UsersManagement: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -611,6 +612,7 @@ export const UsersManagement: React.FC = () => {
                         </>
                       )}
                       <button
+                        onClick={() => setEditingUser(user)}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         title="Edit User"
                       >
@@ -845,6 +847,75 @@ export const UsersManagement: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-gray-800">Edit User</h2>
+              <button onClick={() => setEditingUser(null)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Name</p>
+                <p className="font-semibold text-gray-800">{editingUser.name}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Phone</p>
+                <p className="font-semibold text-gray-800">{editingUser.phone}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <select
+                  defaultValue={editingUser.role}
+                  id="edit-role-select"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  <option value="agent">Agent</option>
+                  <option value="co-owner">Co-Owner</option>
+                  <option value="owner">Owner</option>
+                </select>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700">Active</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" defaultChecked={editingUser.isActive} id="edit-active-toggle" className="sr-only peer" />
+                  <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500" />
+                </label>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setEditingUser(null)}
+                className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors text-sm">
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const roleEl = document.getElementById('edit-role-select') as HTMLSelectElement;
+                  const activeEl = document.getElementById('edit-active-toggle') as HTMLInputElement;
+                  try {
+                    await dataService.updateUser(editingUser.id, {
+                      role: roleEl.value as 'owner' | 'co-owner' | 'agent',
+                      isActive: activeEl.checked
+                    });
+                    setUsers(prev => prev.map(u => u.id === editingUser.id
+                      ? { ...u, role: roleEl.value as any, isActive: activeEl.checked }
+                      : u
+                    ));
+                    setEditingUser(null);
+                  } catch (err: any) {
+                    setError(err.message || 'Failed to update user');
+                  }
+                }}
+                className="flex-1 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm">
+                Save Changes
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

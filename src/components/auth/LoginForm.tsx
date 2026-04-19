@@ -379,6 +379,27 @@ export const LoginForm: React.FC = () => {
                       required
                     />
                   </div>
+                  {password && (
+                    <div className="mt-2">
+                      <div className="flex gap-1 mb-1">
+                        {[1,2,3,4].map(i => (
+                          <div key={i} className={`h-1 flex-1 rounded-full transition-all ${
+                            password.length >= i * 2 + 4
+                              ? i <= 1 ? 'bg-red-400' : i <= 2 ? 'bg-yellow-400' : i <= 3 ? 'bg-blue-400' : 'bg-green-400'
+                              : 'bg-gray-200'
+                          }`} />
+                        ))}
+                      </div>
+                      <p className={`text-xs ${
+                        password.length < 6 ? 'text-red-500' :
+                        password.length < 8 ? 'text-yellow-600' :
+                        password.length < 12 ? 'text-blue-600' : 'text-green-600'
+                      }`}>
+                        {password.length < 6 ? 'Too short' : password.length < 8 ? 'Weak' : password.length < 12 ? 'Good' : 'Strong'} password
+                        {password.length < 8 && ' — min 8 characters'}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div>
