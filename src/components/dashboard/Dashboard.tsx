@@ -7,10 +7,12 @@ import { DashboardMetrics } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLineContext } from '../../contexts/LineContext';
 import { dataService } from '../../services/dataService';
+import { useToast } from '../../contexts/ToastContext';
 import { useRealtimeLoans } from '../../hooks/useRealtimePayments';
 
 export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({ onViewAll }) => {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const { selectedLine } = useLineContext();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,7 +101,7 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
       window.URL.revokeObjectURL(url);
       setExportOpen(false);
     } catch (e) {
-            alert('Export failed: ' + (e instanceof Error ? e.message : String(e)));
+            console.error('Export failed:', e);
     }
   };
 

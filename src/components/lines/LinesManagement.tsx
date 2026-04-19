@@ -23,6 +23,7 @@ export const LinesManagement: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [opLoading, setOpLoading] = useState(false);
+  const [confirmDeleteLineId, setConfirmDeleteLineId] = useState<string | null>(null);
   const showError = (err: any) => {
     const msg = err && err.message ? err.message : String(err) || 'An error occurred';
     if (err && (err as any).status === 401) setError('Unauthorized — please log in again');
@@ -161,13 +162,13 @@ export const LinesManagement: React.FC = () => {
   };
 
   const handleDeleteLine = async (lineId: string) => {
-    if (!confirm('Are you sure you want to delete this line? This action cannot be undone.')) return;
     try {
       setOpLoading(true);
       await dataService.deleteLine(lineId);
       setLines(prev => prev.filter(line => line.id !== lineId));
+      setConfirmDeleteLineId(null);
     } catch (error: any) {
-            showError(error);
+      showError(error);
     } finally {
       setOpLoading(false);
     }
@@ -332,16 +333,34 @@ export const LinesManagement: React.FC = () => {
                   <span>{user?.role === 'co-owner' ? 'Assign Agent' : 'Edit'}</span>
                 </motion.button>
                 {user?.role === 'owner' && (
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleDeleteLine(line.id)}
-                    disabled={opLoading}
-                    className="flex-1 bg-red-50 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors flex items-center justify-center space-x-1 disabled:opacity-60"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span>{t('delete')}</span>
-                  </motion.button>
+                  confirmDeleteLineId === line.id ? (
+                    <div className="flex gap-1 flex-1">
+                      <button
+                        onClick={() => handleDeleteLine(line.id)}
+                        disabled={opLoading}
+                        className="flex-1 bg-red-600 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-red-700 transition-colors disabled:opacity-60"
+                      >
+                        {opLoading ? '...' : 'Confirm'}
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteLineId(null)}
+                        className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setConfirmDeleteLineId(line.id)}
+                      disabled={opLoading}
+                      className="flex-1 bg-red-50 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors flex items-center justify-center space-x-1 disabled:opacity-60"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>{t('delete')}</span>
+                    </motion.button>
+                  )
                 )}
               </div>
             )}

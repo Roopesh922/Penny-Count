@@ -152,10 +152,16 @@ export const TopBar: React.FC<TopBarProps> = ({ title, onMenuClick }) => {
             <p className="text-xs lg:text-sm font-medium text-gray-800 truncate max-w-[80px] lg:max-w-[120px]">{user?.name}</p>
             <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
           </div>
-          <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-orange-500 via-orange-600 to-teal-600 rounded-full flex items-center justify-center shadow-md ring-2 ring-orange-100 flex-shrink-0">
-            <span className="text-white font-bold text-xs">
-              {user?.name.split(' ').map(n => n[0]).join('')}
-            </span>
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden shadow-md ring-2 ring-orange-100 flex-shrink-0">
+            {user?.photo ? (
+              <img src={user.photo} alt={user.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-orange-500 via-orange-600 to-teal-600 flex items-center justify-center">
+                <span className="text-white font-bold text-xs">
+                  {user?.name.split(' ').map(n => n[0]).join('')}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

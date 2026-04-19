@@ -142,10 +142,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
         </div>
 
         <div className="relative flex items-center space-x-2 bg-white/80 backdrop-blur-sm rounded-xl p-2.5 shadow-lg border border-gray-100">
-          <div className="w-9 h-9 bg-gradient-to-br from-orange-500 via-orange-600 to-teal-600 rounded-xl flex items-center justify-center shadow-md transform hover:scale-110 transition-transform">
-            <span className="text-white font-bold text-xs">
-              {user.name.split(' ').map(n => n[0]).join('')}
-            </span>
+          <div className="w-9 h-9 rounded-xl overflow-hidden shadow-md transform hover:scale-110 transition-transform flex-shrink-0">
+            {user.photo ? (
+              <img src={user.photo} alt={user.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-orange-500 via-orange-600 to-teal-600 flex items-center justify-center">
+                <span className="text-white font-bold text-xs">
+                  {user.name.split(' ').map(n => n[0]).join('')}
+                </span>
+              </div>
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="font-semibold text-gray-900 text-xs lg:text-sm truncate">{user.name}</h2>
