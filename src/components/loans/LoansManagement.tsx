@@ -36,6 +36,7 @@ export const LoansManagement: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showRestructureModal, setShowRestructureModal] = useState(false);
   const [isRestructuring, setIsRestructuring] = useState(false);
+  const [liveCalc, setLiveCalc] = useState({ principal: 0, finalAmount: 0, interest: 0, interestPct: 0 });
   const [borrowerMap, setBorrowerMap] = useState<{ [key: string]: string }>({});
   const { push: pushToast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -673,9 +674,35 @@ export const LoansManagement: React.FC = () => {
                   placeholder="12000"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                   required
+                  onChange={(e) => {
+                    const form = e.currentTarget.closest('form') as HTMLFormElement;
+                    const p = parseFloat((form.querySelector('[name="amount"]') as HTMLInputElement)?.value || '0');
+                    const f = parseFloat(e.target.value || '0');
+                    if (p > 0 && f > 0) {
+                      setLiveCalc({ principal: p, finalAmount: f, interest: f - p, interestPct: Math.round(((f - p) / p) * 100 * 10) / 10 });
+                    }
+                  }}
                 />
                 <p className="text-xs text-gray-500 mt-1">Total amount including interest</p>
               </div>
+              {liveCalc.principal > 0 && liveCalc.finalAmount > 0 && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-sm">
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <p className="text-gray-500 text-xs">Principal</p>
+                      <p className="font-bold text-gray-800">₹{liveCalc.principal.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 text-xs">Interest</p>
+                      <p className="font-bold text-emerald-700">₹{liveCalc.interest.toLocaleString()} ({liveCalc.interestPct}%)</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 text-xs">Total</p>
+                      <p className="font-bold text-gray-800">₹{liveCalc.finalAmount.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Tenure (Months)
@@ -694,7 +721,16 @@ export const LoansManagement: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Repayment Frequency
                 </label>
-                <select name="repaymentFrequency" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required>
+                <select name="repaymentFrequency" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required
+                  onChange={(e) => {
+                    const form = e.currentTarget.closest('form') as HTMLFormElement;
+                    const p = parseFloat((form.querySelector('[name="amount"]') as HTMLInputElement)?.value || '0');
+                    const f = parseFloat((form.querySelector('[name="finalAmount"]') as HTMLInputElement)?.value || '0');
+                    if (p > 0 && f > 0) {
+                      setLiveCalc(prev => ({ ...prev, principal: p, finalAmount: f, interest: f - p, interestPct: Math.round(((f - p) / p) * 100 * 10) / 10 }));
+                    }
+                  }}
+                >
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
                   <option value="monthly">Monthly</option>

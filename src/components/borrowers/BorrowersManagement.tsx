@@ -834,11 +834,12 @@ export const BorrowersManagement: React.FC = () => {
                   whileTap={{ scale: 0.98 }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    // Handle collect payment
+                    handleNewLoanClick(borrower);
                   }}
-                  className="flex-1 bg-emerald-50 text-emerald-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-emerald-100 transition-colors"
+                  className="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors flex items-center justify-center gap-1"
                 >
-                  Collect
+                  <CreditCard className="w-3.5 h-3.5" />
+                  New Loan
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.02 }}

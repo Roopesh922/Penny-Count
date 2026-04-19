@@ -101,8 +101,6 @@ export const UsersManagement: React.FC = () => {
         throw searchError;
       }
 
-      console.log('Search results:', searchResults);
-
       // Check if any user was found
       if (searchResults && Array.isArray(searchResults) && searchResults.length > 0) {
         const foundUser = searchResults[0];
@@ -156,15 +154,6 @@ export const UsersManagement: React.FC = () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     setError(null);
-
-    console.log('Attempting to add user to team:', {
-      searchedUser: searchedUser,
-      currentUser: currentUser,
-      updatePayload: {
-        isActive: true,
-        addedBy: currentUser?.id
-      }
-    });
 
     try {
       // Set the user's added_by to current owner and activate

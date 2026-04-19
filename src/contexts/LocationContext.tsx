@@ -136,7 +136,7 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         .from('agent_locations')
         .update({ is_active: false })
         .eq('user_id', user.id)
-        .then(() => console.log('Tracking disabled'));
+        .then(() => {});
     }
 
     setIsTracking(false);

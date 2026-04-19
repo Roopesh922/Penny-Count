@@ -32,6 +32,8 @@ export const Settings: React.FC = () => {
   const [editValues, setEditValues] = useState({ name: '', email: '', phone: '' });
   const [passwords, setPasswords] = useState({ current: '', newPassword: '', confirm: '' });
   const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = React.useRef<HTMLInputElement>(null);
   const [themeDark, setThemeDark] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
@@ -235,20 +237,61 @@ export const Settings: React.FC = () => {
       <div>
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Profile Picture</h3>
         <div className="flex items-center space-x-4">
-          <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-2xl">{
-              (profile?.name || 'U').split(' ').map((n: string) => n[0]).join('')
-            }</span>
+          <div className="w-20 h-20 rounded-full overflow-hidden bg-emerald-500 flex items-center justify-center">
+            {profile?.photo ? (
+              <img src={profile.photo} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-white font-bold text-2xl">{
+                (profile?.name || 'U').split(' ').map((n: string) => n[0]).join('')
+              }</span>
+            )}
           </div>
           <div>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file || !profile) return;
+                if (file.size > 2 * 1024 * 1024) {
+                  showToast('Photo must be under 2MB', 'error');
+                  return;
+                }
+                setUploadingPhoto(true);
+                try {
+                  const ext = file.name.split('.').pop();
+                  const path = `avatars/${profile.id || profile._id}.${ext}`;
+                  const { error: uploadError } = await supabase.storage
+                    .from('user-photos')
+                    .upload(path, file, { upsert: true });
+                  if (uploadError) throw uploadError;
+                  const { data: { publicUrl } } = supabase.storage
+                    .from('user-photos')
+                    .getPublicUrl(path);
+                  await dataService.updateUser(profile.id || profile._id, { photo: publicUrl } as any);
+                  setProfile({ ...profile, photo: publicUrl });
+                  showToast('Photo updated!', 'success');
+                } catch (err: any) {
+                  showToast(err.message || 'Failed to upload photo', 'error');
+                } finally {
+                  setUploadingPhoto(false);
+                }
+              }}
+            />
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors"
+              onClick={() => photoInputRef.current?.click()}
+              disabled={uploadingPhoto}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center gap-2"
             >
-              Upload Photo
+              {uploadingPhoto ? (
+                <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Uploading...</>
+              ) : 'Upload Photo'}
             </motion.button>
-            <p className="text-sm text-gray-500 mt-1">JPG, PNG up to 2MB</p>
+            <p className="text-sm text-gray-500 mt-1">JPG, PNG, WebP up to 2MB</p>
           </div>
         </div>
       </div>

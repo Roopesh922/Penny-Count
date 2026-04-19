@@ -82,7 +82,6 @@ export const OfflineProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       // Here you would sync with your actual backend
       // For now, we'll just clear the offline data
-      console.log('Syncing offline data:', offlineData);
       
       // Simulate sync delay
       await new Promise(resolve => setTimeout(resolve, 2000));

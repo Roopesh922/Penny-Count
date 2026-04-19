@@ -171,11 +171,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
-      console.log('Signup response:', {
-        hasUser: !!authData?.user,
-        error: authError?.message
-      });
-
       if (authError) {
         console.error('Signup error:', authError);
         throw authError;
@@ -269,11 +264,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
-      });
-
-      console.log('Login response:', {
-        hasUser: !!data?.user,
-        error: error?.message
       });
 
       if (error) {

@@ -38,7 +38,6 @@ class OfflineQueueService {
           status: 'pending'
         });
       } catch (error) {
-        console.log('Failed to save to database, will sync later:', error);
       }
     }
   }
@@ -69,12 +68,10 @@ class OfflineQueueService {
   // Sync queue with server
   async syncQueue(userId: string): Promise<{ success: number; failed: number }> {
     if (this.isSyncing) {
-      console.log('Sync already in progress');
       return { success: 0, failed: 0 };
     }
 
     if (!navigator.onLine) {
-      console.log('Cannot sync: offline');
       return { success: 0, failed: 0 };
     }
 
