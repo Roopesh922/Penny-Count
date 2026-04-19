@@ -87,15 +87,7 @@ export const Commissions: React.FC = () => {
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
-  const handleCreateCommission = async (newCommission: Commission) => {
-    try {
-      const savedCommission = await dataService.createCommission(newCommission);
-      setCommissions([...commissions, savedCommission]);
-      setShowCreateModal(false);
-    } catch (error) {
-      setError('Error creating commission');
-    }
-  };
+
 
   return (
     <div className="space-y-6 w-full max-w-full overflow-x-hidden">
@@ -305,6 +297,7 @@ export const Commissions: React.FC = () => {
                 <th className="text-left py-4 px-6 font-medium text-gray-700">Commission</th>
                 <th className="text-left py-4 px-6 font-medium text-gray-700">Status</th>
                 <th className="text-left py-4 px-6 font-medium text-gray-700">Paid Date</th>
+                <th className="text-left py-4 px-6 font-medium text-gray-700"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -350,6 +343,26 @@ export const Commissions: React.FC = () => {
                       <span className="text-gray-400">-</span>
                     )}
                   </td>
+                  <td className="py-4 px-6">
+                    {commission.status === 'pending' && (
+                      <button
+                        onClick={async () => {
+                          try {
+                            const updated = await dataService.updateCommission(commission.id, {
+                              status: 'paid',
+                              paidDate: new Date()
+                            });
+                            setCommissions(prev => prev.map(c => c.id === commission.id ? updated : c));
+                          } catch (err: any) {
+                            setError(err.message || 'Failed to mark as paid');
+                          }
+                        }}
+                        className="px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors"
+                      >
+                        Mark Paid
+                      </button>
+                    )}
+                  </td>
                 </motion.tr>
               ))}
             </tbody>
@@ -362,60 +375,77 @@ export const Commissions: React.FC = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+          onClick={() => setShowCreateModal(false)}
         >
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Add New Commission</h2>
-            <div className="space-y-4">
-              {/* Form fields for new commission */}
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-semibold text-gray-800">Add Commission</h2>
+              <button onClick={() => setShowCreateModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const fd = new FormData(e.currentTarget);
+                const lineId = fd.get('lineId') as string;
+                const periodStr = fd.get('period') as string;
+                const baseAmount = parseFloat(fd.get('baseAmount') as string);
+                const rate = parseFloat(fd.get('rate') as string);
+                const amount = Math.round((baseAmount * rate) / 100 * 100) / 100;
+                const [year, month] = periodStr.split('-');
+                const periodStart = new Date(parseInt(year), parseInt(month) - 1, 1);
+                const periodEnd = new Date(parseInt(year), parseInt(month), 0);
+                try {
+                  const saved = await dataService.createCommission({
+                    lineId,
+                    amount,
+                    periodStart,
+                    periodEnd,
+                    status: 'pending'
+                  } as any);
+                  setCommissions(prev => [saved, ...prev]);
+                  setShowCreateModal(false);
+                } catch (err: any) {
+                  setError(err.message || 'Failed to create commission');
+                }
+              }}
+              className="space-y-4"
+            >
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Line</label>
-                <select
-                  // ...options for lines...
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                >
-                  {/* Options for lines */}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Line *</label>
+                <select name="lineId" required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                  <option value="">Select line</option>
+                  {lines.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Period</label>
-                <input
-                  type="month"
-                  // ...other props...
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Period *</label>
+                <input type="month" name="period" required defaultValue={new Date().toISOString().substring(0, 7)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Base Amount</label>
-                <input
-                  type="number"
-                  // ...other props...
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Base Amount (₹) *</label>
+                <input type="number" name="baseAmount" required min="1" step="0.01" placeholder="e.g. 50000"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Rate (%)</label>
-                <input
-                  type="number"
-                  // ...other props...
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Commission Rate (%) *</label>
+                <input type="number" name="rate" required min="0.1" max="100" step="0.1" placeholder="e.g. 5"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
+                <p className="text-xs text-gray-400 mt-1">Commission amount = base × rate ÷ 100</p>
               </div>
-            </div>
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 bg-gray-200 rounded-lg font-medium text-gray-700 hover:bg-gray-300 transition-colors mr-2"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateCommission}
-                className="px-4 py-2 bg-emerald-500 text-white rounded-lg font-medium hover:bg-emerald-600 transition-colors"
-              >
-                Create Commission
-              </button>
-            </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowCreateModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-100 rounded-lg font-medium text-gray-700 hover:bg-gray-200 transition-colors">
+                  Cancel
+                </button>
+                <button type="submit"
+                  className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg font-medium hover:bg-emerald-600 transition-colors">
+                  Create
+                </button>
+              </div>
+            </form>
           </div>
         </motion.div>
       )}

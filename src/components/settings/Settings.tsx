@@ -128,12 +128,12 @@ export const Settings: React.FC = () => {
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmation !== 'DELETE') {
-      showToast('Please type DELETE to confirm account deletion', 'success');
+      showToast('Please type DELETE to confirm account deletion', 'error');
       return;
     }
 
     if (!profile?.id && !user?.id) {
-      showToast('Unable to delete account: User ID not found', 'success');
+      showToast('Unable to delete account: User ID not found', 'error');
       return;
     }
 

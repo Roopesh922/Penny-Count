@@ -70,38 +70,79 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
 
   const performExport = async () => {
     try {
-      const payload = {
-        lineIds: selectedLineIds,
-        agentIds: selectedAgentIds,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
-        format: exportFormat
-      };
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/exports`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...( (localStorage.getItem('penny-count-token') ? { Authorization: `Bearer ${localStorage.getItem('penny-count-token')}` } : {}) ) },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || `Export failed: ${res.status}`);
+      // Client-side export using real data
+      const [loans, borrowers, payments] = await Promise.all([
+        dataService.getLoans(),
+        dataService.getBorrowers(),
+        dataService.getPayments()
+      ]);
+
+      const borrowerMap: Record<string, string> = {};
+      borrowers.forEach(b => { borrowerMap[b.id] = b.name; });
+
+      const filteredLoans = loans.filter(l =>
+        selectedLineIds.includes(l.lineId) &&
+        (selectedAgentIds.length === 0 || selectedAgentIds.includes(l.agentId || ''))
+      );
+
+      const rows: string[][] = [];
+      rows.push(['Loan ID', 'Borrower', 'Line ID', 'Principal', 'Total Amount', 'Paid', 'Remaining', 'Status', 'Frequency', 'Disbursed Date', 'Due Date']);
+
+      filteredLoans
+        .filter(l => {
+          if (!startDate && !endDate) return true;
+          const d = new Date(l.disbursedAt);
+          if (startDate && d < new Date(startDate)) return false;
+          if (endDate && d > new Date(endDate)) return false;
+          return true;
+        })
+        .forEach(l => {
+          rows.push([
+            l.id,
+            borrowerMap[l.borrowerId] || l.borrowerId,
+            l.lineId,
+            l.amount.toString(),
+            l.totalAmount.toString(),
+            l.paidAmount.toString(),
+            l.remainingAmount.toString(),
+            l.status,
+            l.repaymentFrequency || 'daily',
+            new Date(l.disbursedAt).toLocaleDateString('en-IN'),
+            new Date(l.dueDate).toLocaleDateString('en-IN'),
+          ]);
+        });
+
+      if (rows.length > 1) {
+        rows.push([]);
+        rows.push(['Payments']);
+        rows.push(['Payment ID', 'Loan ID', 'Borrower', 'Amount', 'Date', 'Method']);
+        payments
+          .filter(p => filteredLoans.some(l => l.id === p.loanId))
+          .forEach(p => {
+            rows.push([
+              p.id,
+              p.loanId,
+              borrowerMap[p.borrowerId || ''] || '',
+              p.amount.toString(),
+              new Date(p.paymentDate).toLocaleDateString('en-IN'),
+              p.method || 'cash',
+            ]);
+          });
       }
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
+
+      const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('
+');
+      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const disp = res.headers.get('content-disposition') || '';
-      let fname = 'export.csv';
-      const m = /filename="?([^";]+)"?/.exec(disp);
-      if (m) fname = m[1];
-      a.download = fname;
-      document.body.appendChild(a);
+      a.download = `pennycount-export-${new Date().toISOString().split('T')[0]}.csv`;
       a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
+      URL.revokeObjectURL(url);
       setExportOpen(false);
+      showToast('Export downloaded successfully', 'success');
     } catch (e) {
-            console.error('Export failed:', e);
+      showToast('Export failed: ' + (e instanceof Error ? e.message : 'Unknown error'), 'error');
     }
   };
 
