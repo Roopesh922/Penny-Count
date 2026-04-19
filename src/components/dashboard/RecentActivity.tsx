@@ -84,21 +84,23 @@ export const RecentActivity: React.FC<{ onViewAll?: (section: string) => void }>
           });
         });
 
-        // Overdue loans
-        const overdueLoans = loans.filter(l => l.status === 'active' && new Date(l.dueDate) < new Date());
-        if (overdueLoans.length > 0) {
-          const loan = overdueLoans[0];
+        // Overdue loans - show up to 2
+        const overdueLoans = loans
+          .filter(l => l.status === 'active' && new Date(l.dueDate) < new Date())
+          .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+        overdueLoans.slice(0, 2).forEach(loan => {
           const name = borrowerMap[loan.borrowerId] || 'Unknown';
+          const daysOverdue = Math.floor((Date.now() - new Date(loan.dueDate).getTime()) / (1000 * 60 * 60 * 24));
           recentActivities.push({
             id: `overdue-${loan.id}`,
             type: 'loan_overdue',
-            title: 'Loan overdue',
+            title: `Loan ${daysOverdue}d overdue`,
             description: `${name} — ₹${loan.remainingAmount.toLocaleString()} outstanding`,
             amount: loan.remainingAmount,
             time: timeAgo(new Date(loan.dueDate)),
             status: 'warning'
           });
-        }
+        });
 
         // Sort by recency (activities with real timestamps first)
         setActivities(recentActivities.slice(0, 5));

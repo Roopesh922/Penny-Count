@@ -313,12 +313,27 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
                     </span>
                   </div>
 
-                  <div className="pt-3 border-t border-gray-100">
+                  <div className="pt-3 border-t border-gray-100 space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Current Balance</span>
                       <span className="text-sm font-bold text-teal-600">
                         ₹{(line.currentBalance || 0).toLocaleString()}
                       </span>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs text-gray-400 mb-1">
+                        <span>Collection progress</span>
+                        <span>{Math.min(line.collectionEfficiency, 100)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-1.5">
+                        <div
+                          className={`h-1.5 rounded-full transition-all ${
+                            line.collectionEfficiency >= 80 ? 'bg-green-500' :
+                            line.collectionEfficiency >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                          }`}
+                          style={{ width: `${Math.min(line.collectionEfficiency, 100)}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

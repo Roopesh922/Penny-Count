@@ -271,7 +271,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
       return false;
     } catch (error: any) {
-            const errorMessage = error.message || 'Invalid credentials.';
+            let errorMessage = error.message || 'Invalid credentials.';
+      // Map technical Supabase errors to user-friendly messages
+      if (errorMessage.includes('Invalid login credentials')) errorMessage = 'Incorrect email/phone or password. Please try again.';
+      else if (errorMessage.includes('Email not confirmed')) errorMessage = 'Please verify your email before logging in.';
+      else if (errorMessage.includes('Too many requests')) errorMessage = 'Too many login attempts. Please wait a few minutes.';
+      else if (errorMessage.includes('User not found')) errorMessage = 'No account found. Please sign up first.';
+      else if (errorMessage.includes('phone number')) errorMessage = 'No account linked to this phone number.';
       setLoginError(errorMessage);
       setIsLoading(false);
       return false;

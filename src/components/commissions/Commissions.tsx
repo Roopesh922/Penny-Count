@@ -337,8 +337,8 @@ export const Commissions: React.FC = () => {
                     </span>
                   </td>
                   <td className="py-4 px-6">
-                    {commission.paidAt ? (
-                      <span className="text-gray-800">{commission.paidAt.toLocaleDateString()}</span>
+                    {(commission.paidDate || commission.paidAt) ? (
+                      <span className="text-gray-800">{new Date(commission.paidDate || commission.paidAt!).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                     ) : (
                       <span className="text-gray-400">-</span>
                     )}

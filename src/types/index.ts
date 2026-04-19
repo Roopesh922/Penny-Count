@@ -151,14 +151,19 @@ export interface PaymentSchedule {
 
 export interface Commission {
   id: string;
-  coOwnerId: string;
+  agentId?: string;
+  coOwnerId?: string;
   lineId: string;
   amount: number;
-  percentage: number;
-  calculatedOn: number; // base amount
-  period: string; // e.g., "2024-01"
+  percentage?: number;
+  calculatedOn?: number;
+  period?: string;
+  periodStart?: Date;
+  periodEnd?: Date;
   paidAt?: Date;
+  paidDate?: Date;
   status: 'pending' | 'paid';
+  createdAt?: Date;
 }
 
 export interface DashboardMetrics {
