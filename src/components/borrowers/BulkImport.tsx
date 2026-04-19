@@ -141,32 +141,38 @@ export const BulkImport: React.FC = () => {
 
     const validRows = importData.filter(row => row.status === 'valid');
 
-    for (let i = 0; i < validRows.length; i++) {
-      const row = validRows[i];
-      row.status = 'importing';
-      setImportData([...importData]);
+    // Mark all as importing
+    validRows.forEach(row => { row.status = 'importing'; });
+    setImportData([...importData]);
+    setProgress(20);
 
-      try {
-        await dataService.createBorrower({
-          serialNumber: row.serialNumber,
-          phone: row.phone,
-          name: row.name,
-          address: row.address,
-          lineId: selectedLine,
-          agentId: user.id
-        });
+    // Batch insert all valid rows at once
+    const borrowerPayloads = validRows.map(row => ({
+      serialNumber: row.serialNumber,
+      phone: row.phone,
+      name: row.name,
+      address: row.address,
+      lineId: selectedLine,
+      agentId: user.id
+    }));
 
-        row.status = 'success';
-        successCount++;
-      } catch (error: any) {
+    const { success, failed } = await dataService.bulkCreateBorrowers(borrowerPayloads);
+    successCount = success.length;
+    failedCount = failed.length;
+
+    // Update row statuses based on results
+    const failedPhones = new Set(failed.map(f => f.data.phone));
+    validRows.forEach(row => {
+      if (failedPhones.has(row.phone)) {
         row.status = 'failed';
-        row.error = error.message;
-        failedCount++;
+        row.error = failed.find(f => f.data.phone === row.phone)?.error || 'Unknown error';
+      } else {
+        row.status = 'success';
       }
+    });
 
-      setProgress(Math.round(((i + 1) / validRows.length) * 100));
-      setImportData([...importData]);
-    }
+    setProgress(100);
+    setImportData([...importData]);
 
     setResults({ success: successCount, failed: failedCount });
     setIsProcessing(false);

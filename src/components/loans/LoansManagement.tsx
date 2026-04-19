@@ -29,6 +29,7 @@ export const LoansManagement: React.FC = () => {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [lineFilter, setLineFilter] = useState<string>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
@@ -74,13 +75,13 @@ export const LoansManagement: React.FC = () => {
   }, [selectedLine]);
 
   const filteredLoans = loans.filter(loan => {
-  const borrowerName = borrowerMap[loan.borrowerId] || '';
+    const borrowerName = borrowerMap[loan.borrowerId] || '';
     const matchesSearch = loan.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          borrowerName.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || loan.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
+    const matchesStatus = statusFilter === 'all' || loan.status === statusFilter ||
+      (statusFilter === 'overdue' && loan.status === 'active' && new Date(loan.dueDate) < new Date());
+    const matchesLine = lineFilter === 'all' || loan.lineId === lineFilter;
+    return matchesSearch && matchesStatus && matchesLine;
   });
 
   const getStatusColor = (status: string) => {
@@ -261,17 +262,8 @@ export const LoansManagement: React.FC = () => {
 
       await dataService.createPayment(paymentData);
 
-      const updatedPaidAmount = selectedLoan.paidAmount + amount;
-      const updatedRemainingAmount = selectedLoan.remainingAmount - amount;
-      const updatedStatus = updatedRemainingAmount <= 0 ? 'completed' : selectedLoan.status;
-
-      const updatedLoan = await dataService.updateLoan(selectedLoan.id, {
-        paidAmount: updatedPaidAmount,
-        remainingAmount: updatedRemainingAmount,
-        status: updatedStatus,
-        ...(updatedStatus === 'completed' && { completedAt: new Date() })
-      });
-
+      // Reload the loan fresh from DB (createPayment already updated paid/remaining/status)
+      const updatedLoan = await dataService.getLoanById(selectedLoan.id);
       setLoans(loans.map(l => l.id === selectedLoan.id ? updatedLoan : l));
       setSelectedLoan(updatedLoan);
       setShowPaymentModal(false);
@@ -452,19 +444,29 @@ export const LoansManagement: React.FC = () => {
               />
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-wrap gap-2">
             <Filter className="w-5 h-5 text-gray-400" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
+              <option value="overdue">⚠ Overdue</option>
               <option value="completed">Completed</option>
-              <option value="overdue">Overdue</option>
               <option value="defaulted">Defaulted</option>
             </select>
+            {(user?.role === 'owner' || user?.role === 'co-owner') && lines.length > 0 && (
+              <select
+                value={lineFilter}
+                onChange={(e) => setLineFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+              >
+                <option value="all">All Lines</option>
+                {lines.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+              </select>
+            )}
           </div>
         </div>
       </motion.div>

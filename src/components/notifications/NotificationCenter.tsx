@@ -172,7 +172,14 @@ export const NotificationCenter: React.FC = () => {
                         </div>
                         <p className="text-xs text-gray-600 mt-1">{notification.message}</p>
                         <p className="text-xs text-gray-400 mt-2">
-                          {notification.createdAt.toLocaleString()}
+                          {(() => {
+                            const d = new Date(notification.createdAt);
+                            const secs = Math.floor((Date.now() - d.getTime()) / 1000);
+                            if (secs < 60) return 'just now';
+                            if (secs < 3600) return `${Math.floor(secs/60)}m ago`;
+                            if (secs < 86400) return `${Math.floor(secs/3600)}h ago`;
+                            return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                          })()}
                         </p>
                       </div>
                     </div>
