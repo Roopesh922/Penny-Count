@@ -43,7 +43,6 @@ export const LoginForm: React.FC = () => {
       }
     } catch (err: any) {
       setError(err?.message || loginError || localStorage.getItem('penny-count-login-error') || 'Login failed.');
-      console.error('Login error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -75,7 +74,6 @@ export const LoginForm: React.FC = () => {
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred');
-      console.error('Signup error:', err);
     } finally {
       setIsLoading(false);
     }

@@ -33,7 +33,6 @@ class DataService {
   async updateUser(id: string, updates: Partial<User>): Promise<User> {
     // If this is a claim operation (setting addedBy), use the secure function
     if (updates.addedBy !== undefined && Object.keys(updates).length <= 2) {
-      console.log('Using claim_user_to_team function for user:', id);
 
       const { data, error } = await supabase
         .rpc('claim_user_to_team', {
@@ -56,7 +55,6 @@ class DataService {
       }
 
       const claimedUser = Array.isArray(data) ? data[0] : data;
-      console.log('Claim successful:', claimedUser);
 
       return {
         id: claimedUser.id,
@@ -80,8 +78,6 @@ class DataService {
     if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
     if (updates.addedBy !== undefined) updateData.added_by = updates.addedBy;
 
-    console.log('Updating user:', id, 'with data:', updateData);
-
     const { data, error } = await supabase
       .from('users')
       .update(updateData)
@@ -90,12 +86,6 @@ class DataService {
       .maybeSingle();
 
     if (error) {
-      console.error('Update error details:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
-      });
       throw error;
     }
 
@@ -103,8 +93,6 @@ class DataService {
       console.error('No data returned after update for user:', id);
       throw new Error('User not found or update not allowed');
     }
-
-    console.log('Update successful:', data);
 
     return {
       ...data,
@@ -528,16 +516,37 @@ class DataService {
       dueDate.setMonth(dueDate.getMonth() + tenure);
     }
 
+    const repaymentFrequency = loan.repaymentFrequency || 'daily';
+    // Calculate per-term amounts
+    let dailyAmt: number | undefined;
+    let weeklyAmt: number | undefined;
+    let monthlyAmt: number | undefined;
+    if (repaymentFrequency === 'daily') {
+      const days = Math.max(1, Math.ceil((dueDate.getTime() - disbursedDate.getTime()) / (24 * 60 * 60 * 1000)));
+      dailyAmt = totalAmount / days;
+    } else if (repaymentFrequency === 'weekly') {
+      const weeks = Math.max(1, Math.ceil((dueDate.getTime() - disbursedDate.getTime()) / (7 * 24 * 60 * 60 * 1000)));
+      weeklyAmt = totalAmount / weeks;
+    } else {
+      const months = Math.max(1, tenure);
+      monthlyAmt = totalAmount / months;
+    }
+
     const { data, error } = await supabase
       .from('loans')
       .insert({
         borrower_id: loan.borrowerId,
         line_id: loan.lineId,
+        agent_id: loan.agentId,
         principal,
         interest_rate: interestRate,
         total_amount: totalAmount,
         balance: totalAmount,
         tenure,
+        repayment_frequency: repaymentFrequency,
+        daily_amount: dailyAmt ?? null,
+        weekly_amount: weeklyAmt ?? null,
+        monthly_amount: monthlyAmt ?? null,
         disbursed_date: disbursedDate.toISOString(),
         due_date: dueDate.toISOString()
       })
@@ -570,6 +579,7 @@ class DataService {
       id: data.id,
       borrowerId: data.borrower_id,
       lineId: data.line_id,
+      agentId: data.agent_id,
       amount: Number(data.principal),
       interestRate: Number(data.interest_rate),
       totalAmount: Number(data.total_amount),
@@ -577,8 +587,13 @@ class DataService {
       remainingAmount: Number(data.balance),
       status: data.status,
       tenure: data.tenure,
+      repaymentFrequency: data.repayment_frequency || 'daily',
+      dailyAmount: data.daily_amount ? Number(data.daily_amount) : undefined,
+      weeklyAmount: data.weekly_amount ? Number(data.weekly_amount) : undefined,
+      monthlyAmount: data.monthly_amount ? Number(data.monthly_amount) : undefined,
       disbursedAt: new Date(data.disbursed_date),
       dueDate: new Date(data.due_date),
+      nextPaymentDate: data.next_payment_date ? new Date(data.next_payment_date) : new Date(data.due_date),
       createdAt: new Date(data.created_at)
     };
   }
@@ -603,12 +618,24 @@ class DataService {
 
     if (updates.tenure !== undefined) {
       updateData.tenure = updates.tenure;
-      const { data: currentLoan } = await supabase.from('loans').select('disbursed_date').eq('id', id).maybeSingle();
+      const { data: currentLoan } = await supabase.from('loans').select('disbursed_date, repayment_frequency, total_amount').eq('id', id).maybeSingle();
       if (currentLoan) {
         const disbursedDate = new Date(currentLoan.disbursed_date);
         const dueDate = new Date(disbursedDate);
         dueDate.setMonth(dueDate.getMonth() + updates.tenure);
         updateData.due_date = dueDate.toISOString();
+        // Recalculate per-term amounts based on new tenure
+        const freq = currentLoan.repayment_frequency || 'daily';
+        const totalAmt = Number(currentLoan.total_amount || 0);
+        if (freq === 'monthly') {
+          updateData.monthly_amount = totalAmt / Math.max(1, updates.tenure);
+        } else if (freq === 'weekly') {
+          const weeks = Math.max(1, Math.ceil((dueDate.getTime() - disbursedDate.getTime()) / (7*24*60*60*1000)));
+          updateData.weekly_amount = totalAmt / weeks;
+        } else {
+          const days = Math.max(1, Math.ceil((dueDate.getTime() - disbursedDate.getTime()) / (24*60*60*1000)));
+          updateData.daily_amount = totalAmt / days;
+        }
       }
     }
 
@@ -1940,7 +1967,6 @@ class DataService {
   }
 
   async exportDailyAccountToExcel(date: string, lineId?: string): Promise<string> {
-    console.log('Exporting daily account to Excel for date:', date, 'line:', lineId);
     return '';
   }
 

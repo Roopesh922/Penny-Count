@@ -49,10 +49,17 @@ const AppContent: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50/20 via-white to-teal-50/30 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">{t('loading')} {t('appName')}...</p>
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-teal-600 flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <span className="text-white font-bold text-2xl">₹</span>
+          </div>
+          <p className="text-gray-500 text-sm font-medium">Loading PennyCount...</p>
+          <div className="flex gap-1 justify-center mt-3">
+            {[0,1,2].map(i => (
+              <div key={i} className="w-2 h-2 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+            ))}
+          </div>
         </div>
       </div>
     );

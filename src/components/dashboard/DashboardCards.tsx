@@ -62,7 +62,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           value: metrics.totalBorrowers,
           icon: Users,
           color: 'bg-indigo-500',
-          change: t('thisWeek'),
+          change: `${metrics.totalBorrowers} total`,
           trend: 'up'
         },
         {
@@ -70,8 +70,8 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           value: metrics.overdueLoans,
           icon: AlertTriangle,
           color: 'bg-red-500',
-          change: t('lastWeek'),
-          trend: 'down'
+          change: `${metrics.overdueLoans} past due`,
+          trend: metrics.overdueLoans > 0 ? 'down' : 'up'
         }
       ];
     }
@@ -83,7 +83,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           value: metrics.totalLines,
           icon: Building2,
           color: 'bg-blue-500',
-          change: t('active'),
+          change: `${metrics.totalLines} line${metrics.totalLines !== 1 ? 's' : ''}`,
           trend: 'neutral'
         },
         {
@@ -91,7 +91,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           value: `₹${metrics.totalDisbursed?.toLocaleString()}`,
           icon: IndianRupee,
           color: 'bg-green-500',
-          change: t('thisMonth'),
+          change: `across ${metrics.totalLines} line${metrics.totalLines !== 1 ? 's' : ''}`,
           trend: 'up'
         },
         {
@@ -100,14 +100,14 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           icon: Wallet,
           color: 'bg-emerald-500',
           change: `${metrics.collectionEfficiency}% efficiency`,
-          trend: 'up'
+          trend: metrics.collectionEfficiency >= 80 ? 'up' : 'down'
         },
         {
           title: t('commissions'),
           value: `₹${(metrics.profit * 0.1)?.toLocaleString()}`,
           icon: TrendingUp,
           color: 'bg-purple-500',
-          change: t('thisMonth'),
+          change: `${metrics.activeLoans} active loans`,
           trend: 'up'
         }
       ];
@@ -120,7 +120,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
         value: metrics.totalBorrowers,
         icon: Users,
         color: 'bg-blue-500',
-        change: t('active'),
+        change: `${metrics.activeLoans} running`,
         trend: 'neutral'
       },
       {
@@ -128,7 +128,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
         value: metrics.activeLoans,
         icon: CreditCard,
         color: 'bg-green-500',
-        change: t('active'),
+        change: `${metrics.activeLoans} running`,
         trend: 'neutral'
       },
       {
@@ -136,7 +136,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
         value: `₹${metrics.cashOnHand?.toLocaleString()}`,
         icon: Wallet,
         color: 'bg-emerald-500',
-        change: t('availableCredit'),
+        change: `cash on hand`,
         trend: 'neutral'
       },
       {
@@ -144,7 +144,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
         value: `${metrics.collectionEfficiency}%`,
         icon: TrendingUp,
         color: 'bg-purple-500',
-        change: t('thisMonth'),
+        change: `this period`,
         trend: metrics.collectionEfficiency > 85 ? 'up' : 'down'
       }
     ];

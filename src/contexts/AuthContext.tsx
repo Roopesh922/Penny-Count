@@ -132,7 +132,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
 
     try {
-      console.log('Attempting signup for:', userData.email);
 
       // Check if email already exists
       const { data: existingEmail } = await supabase
@@ -183,7 +182,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (authData.user) {
-        console.log('Creating user profile for:', authData.user.id);
 
         const { error: profileError } = await supabase
           .from('users')
@@ -212,8 +210,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsLoading(false);
           return false;
         }
-
-        console.log('Signup successful');
         setIsLoading(false);
         return true;
       }
@@ -246,14 +242,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
 
     try {
-      console.log('Attempting login for:', emailOrPhone);
 
       let email = emailOrPhone;
 
       // Check if input is a phone number (10 digits)
       const cleanedInput = emailOrPhone.replace(/[^0-9]/g, '');
       if (cleanedInput.length === 10) {
-        console.log('Input detected as phone number, looking up email...');
 
         // Use the secure database function to look up email by phone
         const { data, error: lookupError } = await supabase.rpc('get_email_by_phone', {
@@ -270,7 +264,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         email = data;
-        console.log('Found email for phone number');
       }
 
       const { data, error } = await supabase.auth.signInWithPassword({

@@ -54,7 +54,15 @@ export const Collections: React.FC = () => {
         ? loansData.filter((l: Loan) => l.status === 'active' && l.lineId === selectedLine.id)
         : loansData.filter((l: Loan) => l.status === 'active');
 
-      setLoans(activeLoans);
+      // Sort: overdue loans first, then by remaining amount descending
+      const sorted = [...activeLoans].sort((a, b) => {
+        const aOverdue = new Date(a.dueDate) < new Date() ? 1 : 0;
+        const bOverdue = new Date(b.dueDate) < new Date() ? 1 : 0;
+        if (bOverdue !== aOverdue) return bOverdue - aOverdue;
+        return b.remainingAmount - a.remainingAmount;
+      });
+
+      setLoans(sorted);
 
       const borrowerMap: { [key: string]: Borrower } = {};
       borrowersData.forEach((b: Borrower) => {
@@ -263,10 +271,23 @@ export const Collections: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading collections...</p>
+      <div className="space-y-4 animate-pulse">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => <div key={i} className="h-24 bg-gray-100 rounded-xl" />)}
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
+          <div className="h-5 bg-gray-200 rounded w-40" />
+          {[1,2,3,4,5].map(i => (
+            <div key={i} className="flex items-center gap-4 p-3 border border-gray-100 rounded-lg">
+              <div className="w-10 h-10 bg-gray-200 rounded-full flex-shrink-0" />
+              <div className="flex-1">
+                <div className="h-3 bg-gray-200 rounded w-1/3 mb-2" />
+                <div className="h-2 bg-gray-200 rounded w-full mb-1" />
+                <div className="h-2 bg-gray-200 rounded w-2/3" />
+              </div>
+              <div className="h-8 bg-gray-200 rounded w-24" />
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -729,7 +750,11 @@ export const Collections: React.FC = () => {
                   transition={{ delay: index * 0.05 }}
                   whileHover={{ scale: 1.01 }}
                   onClick={() => handleViewLoan(loan)}
-                  className="flex flex-col md:flex-row md:items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-teal-300 hover:bg-teal-50 transition-all cursor-pointer"
+                  className={`flex flex-col md:flex-row md:items-center justify-between p-4 border-2 rounded-lg transition-all cursor-pointer ${
+                    new Date(loan.dueDate) < new Date()
+                      ? 'border-red-200 bg-red-50 hover:border-red-300'
+                      : 'border-gray-200 hover:border-teal-300 hover:bg-teal-50'
+                  }`}
                 >
                   <div className="flex items-center space-x-4 mb-4 md:mb-0">
                     <div className="p-3 bg-teal-100 rounded-full">

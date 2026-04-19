@@ -111,6 +111,21 @@ export const OwnerDashboard: React.FC = () => {
   const netBalance = totalCollections + totalQRPayments - approvedExpenses - approvedWithdrawals;
   const closingBalance = (dailyAccount?.openingBalance || 0) + netBalance;
 
+  if (loading) {
+    return (
+      <div className="p-6 space-y-4 animate-pulse">
+        <div className="h-8 bg-gray-200 rounded w-48" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => <div key={i} className="h-28 bg-gray-100 rounded-2xl" />)}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="h-64 bg-gray-100 rounded-2xl" />
+          <div className="h-64 bg-gray-100 rounded-2xl" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}

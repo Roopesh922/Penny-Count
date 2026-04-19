@@ -173,6 +173,13 @@ export interface DashboardMetrics {
   cashOnHand: number;
   defaultRate: number;
   avgLoanSize: number;
+  // Extended fields returned by getDashboardMetrics
+  totalCapital?: number;
+  pendingCollections?: number;
+  lineCount?: number;
+  recentActivity?: any[];
+  completedLoans?: number;
+  avgTenure?: number;
 }
 
 export interface Notification {

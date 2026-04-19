@@ -16,7 +16,6 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
   const [lineCollections, setLineCollections] = useState<any[]>([]);
 
   const handleQuickAction = (action: string) => {
-    console.log('Quick action triggered:', action);
 
     if (action === 'collect-payment') {
       onViewAll?.('collections');
@@ -25,7 +24,6 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
     } else if (action === 'add-borrower') {
       onViewAll?.('borrowers');
     } else if (action === 'sync-data') {
-      console.log('Syncing offline data...');
     } else if (action === 'create-line') {
       onViewAll?.('lines');
     } else if (action === 'add-agent') {
@@ -183,8 +181,25 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="space-y-4 sm:space-y-6 w-full animate-pulse">
+        <div className="h-8 bg-gray-200 rounded-lg w-56" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1,2,3,4,5,6].map(i => (
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gray-200 rounded-xl" />
+                <div className="w-6 h-6 bg-gray-200 rounded" />
+              </div>
+              <div className="h-3 bg-gray-200 rounded w-24 mb-2" />
+              <div className="h-7 bg-gray-200 rounded w-32 mb-2" />
+              <div className="h-3 bg-gray-200 rounded w-20" />
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 h-64 bg-white rounded-2xl border border-gray-100" />
+          <div className="h-64 bg-white rounded-2xl border border-gray-100" />
+        </div>
       </div>
     );
   }

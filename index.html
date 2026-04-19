@@ -7,7 +7,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover" />
     <meta name="theme-color" content="#10b981" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#059669" media="(prefers-color-scheme: dark)" />
-    <meta name="description" content="Complete lending management system for microfinance operations with offline support" />
+    <meta name="description" content="PennyCount - Smart lending management for microfinance. Track loans, collections, borrowers and daily accounts with offline support." />
+    <meta property="og:title" content="PennyCount - Lending Management" />
+    <meta property="og:description" content="Smart microfinance management — loans, collections, analytics and daily accounts." />
+    <meta property="og:url" content="https://www.pennycount.in" />
 
     <!-- Apple Touch Icon -->
     <link rel="apple-touch-icon" href="/icon-192x192.png" />
@@ -119,8 +122,6 @@
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
             .then(registration => {
-              console.log('SW registered:', registration);
-
               // Check for updates
               registration.addEventListener('updatefound', () => {
                 const newWorker = registration.installing;
@@ -135,7 +136,7 @@
                 });
               });
             })
-            .catch(err => console.log('SW registration failed:', err));
+            .catch(() => {});
         });
 
         // Handle service worker messages
