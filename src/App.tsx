@@ -136,7 +136,7 @@ const AppContent: React.FC = () => {
       {/* Sidebar */}
       <Sidebar
         activeSection={activeSection}
-        onSectionChange={setActiveSection}
+        onSectionChange={(section) => { setActiveSection(section); setSidebarOpen(false); }}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />

@@ -71,34 +71,32 @@ export const Collections: React.FC = () => {
     const schedule: PaymentSchedule[] = [];
     const startDate = new Date(loan.disbursedAt);
     const endDate = new Date(loan.dueDate);
+    const now = new Date();
+
+    // Fetch all payments and missed payments in 2 queries total (not N*2)
+    const [payments, missedPayments] = await Promise.all([
+      dataService.getPaymentsByLoan(loan.id),
+      dataService.getMissedPaymentsByLoan(loan.id)
+    ]);
 
     let totalTerms = 0;
     let amountPerTerm = 0;
 
     if (loan.repaymentFrequency === 'weekly') {
-      const weeks = Math.ceil((endDate.getTime() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000));
-      totalTerms = weeks;
-      amountPerTerm = loan.totalAmount / weeks;
+      totalTerms = Math.ceil((endDate.getTime() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000));
+      amountPerTerm = loan.totalAmount / Math.max(totalTerms, 1);
     } else if (loan.repaymentFrequency === 'monthly') {
-      const months = Math.ceil((endDate.getTime() - startDate.getTime()) / (30 * 24 * 60 * 60 * 1000));
-      totalTerms = months;
-      amountPerTerm = loan.totalAmount / months;
+      totalTerms = Math.ceil((endDate.getTime() - startDate.getTime()) / (30 * 24 * 60 * 60 * 1000));
+      amountPerTerm = loan.totalAmount / Math.max(totalTerms, 1);
     } else {
-      const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
-      totalTerms = days;
-      amountPerTerm = loan.totalAmount / days;
+      totalTerms = Math.ceil((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
+      amountPerTerm = loan.totalAmount / Math.max(totalTerms, 1);
     }
 
-    const payments = await dataService.getPaymentsByLoan(loan.id);
-    const missedPayments = await dataService.getMissedPaymentsByLoan(loan.id);
-
-    let cumulativePaid = 0;
-
     for (let i = 0; i < totalTerms; i++) {
-      let termDate = new Date(startDate);
-
+      const termDate = new Date(startDate);
       if (loan.repaymentFrequency === 'weekly') {
-        termDate.setDate(termDate.getDate() + (i * 7));
+        termDate.setDate(termDate.getDate() + i * 7);
       } else if (loan.repaymentFrequency === 'monthly') {
         termDate.setMonth(termDate.getMonth() + i);
       } else {
@@ -115,21 +113,18 @@ export const Collections: React.FC = () => {
       }
 
       const termPayments = payments.filter((p: Payment) => {
-        const paymentDate = new Date(p.receivedAt || p.paymentDate);
-        return paymentDate >= termDate && paymentDate < termEndDate;
+        const pd = new Date(p.receivedAt || p.paymentDate);
+        return pd >= termDate && pd < termEndDate;
       });
 
       const termMissed = missedPayments.find((mp: MissedPayment) => {
-        const missedDate = new Date(mp.expectedDate);
-        return missedDate >= termDate && missedDate < termEndDate;
+        const md = new Date(mp.expectedDate);
+        return md >= termDate && md < termEndDate;
       });
 
       const amountPaidThisTerm = termPayments.reduce((sum: number, p: Payment) => sum + p.amount, 0);
-      cumulativePaid += amountPaidThisTerm;
 
-      const now = new Date();
       let status: PaymentSchedule['status'] = 'pending';
-
       if (termMissed && !termMissed.paidLater) {
         status = 'missed';
       } else if (amountPaidThisTerm >= amountPerTerm) {

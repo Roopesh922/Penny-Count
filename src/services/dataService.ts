@@ -427,6 +427,7 @@ class DataService {
       id: loan.id,
       borrowerId: loan.borrower_id,
       lineId: loan.line_id,
+      agentId: loan.agent_id,
       amount: Number(loan.principal),
       interestRate: Number(loan.interest_rate),
       totalAmount: Number(loan.total_amount),
@@ -434,8 +435,13 @@ class DataService {
       remainingAmount: Number(loan.balance),
       status: loan.status,
       tenure: loan.tenure,
+      repaymentFrequency: loan.repayment_frequency || 'daily',
+      dailyAmount: loan.daily_amount ? Number(loan.daily_amount) : undefined,
+      weeklyAmount: loan.weekly_amount ? Number(loan.weekly_amount) : undefined,
+      monthlyAmount: loan.monthly_amount ? Number(loan.monthly_amount) : undefined,
       disbursedAt: new Date(loan.disbursed_date),
       dueDate: new Date(loan.due_date),
+      nextPaymentDate: loan.next_payment_date ? new Date(loan.next_payment_date) : new Date(loan.due_date),
       createdAt: new Date(loan.created_at)
     }));
   }
@@ -453,6 +459,7 @@ class DataService {
       id: loan.id,
       borrowerId: loan.borrower_id,
       lineId: loan.line_id,
+      agentId: loan.agent_id,
       amount: Number(loan.principal),
       interestRate: Number(loan.interest_rate),
       totalAmount: Number(loan.total_amount),
@@ -460,8 +467,13 @@ class DataService {
       remainingAmount: Number(loan.balance),
       status: loan.status,
       tenure: loan.tenure,
+      repaymentFrequency: loan.repayment_frequency || 'daily',
+      dailyAmount: loan.daily_amount ? Number(loan.daily_amount) : undefined,
+      weeklyAmount: loan.weekly_amount ? Number(loan.weekly_amount) : undefined,
+      monthlyAmount: loan.monthly_amount ? Number(loan.monthly_amount) : undefined,
       disbursedAt: new Date(loan.disbursed_date),
       dueDate: new Date(loan.due_date),
+      nextPaymentDate: loan.next_payment_date ? new Date(loan.next_payment_date) : new Date(loan.due_date),
       createdAt: new Date(loan.created_at)
     }));
   }
@@ -485,6 +497,7 @@ class DataService {
       id: loan.id,
       borrowerId: loan.borrower_id,
       lineId: loan.line_id,
+      agentId: loan.agent_id,
       amount: Number(loan.principal),
       interestRate: Number(loan.interest_rate),
       totalAmount: Number(loan.total_amount),
@@ -492,8 +505,13 @@ class DataService {
       remainingAmount: Number(loan.balance),
       status: loan.status,
       tenure: loan.tenure,
+      repaymentFrequency: loan.repayment_frequency || 'daily',
+      dailyAmount: loan.daily_amount ? Number(loan.daily_amount) : undefined,
+      weeklyAmount: loan.weekly_amount ? Number(loan.weekly_amount) : undefined,
+      monthlyAmount: loan.monthly_amount ? Number(loan.monthly_amount) : undefined,
       disbursedAt: new Date(loan.disbursed_date),
       dueDate: new Date(loan.due_date),
+      nextPaymentDate: loan.next_payment_date ? new Date(loan.next_payment_date) : new Date(loan.due_date),
       createdAt: new Date(loan.created_at)
     }));
   }
@@ -727,7 +745,12 @@ class DataService {
 
     if (loan) {
       const newPaidAmount = Number(loan.amount_paid) + (payment.amount || 0);
-      await this.updateLoan(payment.loanId!, { paidAmount: newPaidAmount });
+      const loanData = await this.getLoanById(payment.loanId!);
+      const updates: Partial<Loan> = { paidAmount: newPaidAmount };
+      if (newPaidAmount >= loanData.totalAmount) {
+        updates.status = 'completed';
+      }
+      await this.updateLoan(payment.loanId!, updates);
 
       try {
         const { data: line } = await supabase
@@ -1340,15 +1363,15 @@ class DataService {
       : 0;
 
     const overdueLoans = activeLoans.filter(l => {
-      const daysSinceLastPayment = Math.floor((Date.now() - new Date(l.startDate).getTime()) / (1000 * 60 * 60 * 24));
-      return daysSinceLastPayment > 7 && l.remainingAmount > 0;
+      const dueDate = new Date(l.dueDate);
+      return dueDate < new Date() && l.remainingAmount > 0;
     }).length;
 
     return {
       totalCapital,
       totalDisbursed,
       totalCollected,
-      profit: totalCollected - totalDisbursed,
+      profit: totalCollected - totalDisbursed + activeLoans.reduce((sum, l) => sum + l.remainingAmount, 0),
       cashOnHand,
       activeLoans: activeLoans.length,
       totalBorrowers: activeBorrowers.length,

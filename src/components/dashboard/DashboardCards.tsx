@@ -30,7 +30,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           value: metrics.totalLines,
           icon: Building2,
           color: 'bg-blue-500',
-          change: `+2 ${t('thisMonth')}`,
+          change: t('thisMonth'),
           trend: 'up'
         },
         {
@@ -38,7 +38,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           value: `₹${metrics.totalDisbursed?.toLocaleString()}`,
           icon: IndianRupee,
           color: 'bg-green-500',
-          change: `+12% ${t('fromLastMonth')}`,
+          change: t('fromLastMonth'),
           trend: 'up'
         },
         {
@@ -46,7 +46,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           value: `₹${metrics.totalCollected?.toLocaleString()}`,
           icon: Wallet,
           color: 'bg-emerald-500',
-          change: `+8% ${t('fromLastMonth')}`,
+          change: t('fromLastMonth'),
           trend: 'up'
         },
         {
@@ -54,7 +54,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           value: `₹${metrics.profit?.toLocaleString()}`,
           icon: TrendingUp,
           color: 'bg-purple-500',
-          change: `+15% ${t('fromLastMonth')}`,
+          change: t('fromLastMonth'),
           trend: 'up'
         },
         {
@@ -62,7 +62,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           value: metrics.totalBorrowers,
           icon: Users,
           color: 'bg-indigo-500',
-          change: '+5 this week',
+          change: t('thisWeek'),
           trend: 'up'
         },
         {
@@ -70,7 +70,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           value: metrics.overdueLoans,
           icon: AlertTriangle,
           color: 'bg-red-500',
-          change: '-3 from last week',
+          change: t('lastWeek'),
           trend: 'down'
         }
       ];
@@ -91,7 +91,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           value: `₹${metrics.totalDisbursed?.toLocaleString()}`,
           icon: IndianRupee,
           color: 'bg-green-500',
-          change: `+8% ${t('thisMonth')}`,
+          change: t('thisMonth'),
           trend: 'up'
         },
         {

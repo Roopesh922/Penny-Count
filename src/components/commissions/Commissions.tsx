@@ -47,15 +47,18 @@ export const Commissions: React.FC = () => {
   }, []);
 
   const filteredCommissions = commissions.filter(commission => {
-    const matchesPeriod = periodFilter === 'all' || commission.period === periodFilter;
+    const getPeriodKey = (c: Commission) => c.periodStart ? new Date(c.periodStart).toISOString().substring(0, 7) : '';
+    const matchesPeriod = periodFilter === 'all' || getPeriodKey(commission) === periodFilter;
     const matchesStatus = statusFilter === 'all' || commission.status === statusFilter;
     return matchesPeriod && matchesStatus;
   });
 
   const totalEarned = commissions.filter(c => c.status === 'paid').reduce((sum, c) => sum + c.amount, 0);
   const totalPending = commissions.filter(c => c.status === 'pending').reduce((sum, c) => sum + c.amount, 0);
-  const thisMonthEarned = commissions.filter(c => c.period === '2024-02' && c.status === 'paid').reduce((sum, c) => sum + c.amount, 0);
-  const thisMonthPending = commissions.filter(c => c.period === '2024-02' && c.status === 'pending').reduce((sum, c) => sum + c.amount, 0);
+  const thisMonthKey = new Date().toISOString().substring(0, 7);
+  const getPeriodKey2 = (c: Commission) => c.periodStart ? new Date(c.periodStart).toISOString().substring(0, 7) : '';
+  const thisMonthEarned = commissions.filter(c => getPeriodKey2(c) === thisMonthKey && c.status === 'paid').reduce((sum, c) => sum + c.amount, 0);
+  const thisMonthPending = commissions.filter(c => getPeriodKey2(c) === thisMonthKey && c.status === 'pending').reduce((sum, c) => sum + c.amount, 0);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -299,7 +302,7 @@ export const Commissions: React.FC = () => {
                     </div>
                   </td>
                   <td className="py-4 px-6">
-                    <span className="text-gray-800">{formatPeriod(commission.period)}</span>
+                    <span className="text-gray-800">{commission.periodStart ? formatPeriod(new Date(commission.periodStart).toISOString().substring(0, 7)) : 'N/A'}</span>
                   </td>
                   <td className="py-4 px-6">
                     <span className="text-gray-800">₹{commission.calculatedOn.toLocaleString()}</span>
