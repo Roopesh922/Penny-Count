@@ -11,7 +11,8 @@ import {
   AlertTriangle,
   TrendingUp,
   MapPin,
-  Phone
+  Phone,
+  Search
 } from 'lucide-react';
 import { Loan, Borrower, Payment, MissedPayment, Penalty, PaymentSchedule } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -29,6 +30,7 @@ export const Collections: React.FC = () => {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [borrowers, setBorrowers] = useState<{ [key: string]: Borrower }>({});
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [paymentSchedule, setPaymentSchedule] = useState<PaymentSchedule[]>([]);
   const [showCollectionModal, setShowCollectionModal] = useState(false);
@@ -665,7 +667,19 @@ export const Collections: React.FC = () => {
         transition={{ delay: 0.2 }}
         className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
       >
-        <h3 className="text-lg font-bold text-gray-900 mb-4">All Active Loans</h3>
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <h3 className="text-lg font-bold text-gray-900 sm:flex-1">All Active Loans</h3>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search borrower..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none w-full sm:w-56"
+            />
+          </div>
+        </div>
         {loans.length === 0 ? (
           <div className="text-center py-12">
             <DollarSign className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -674,7 +688,12 @@ export const Collections: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {loans.map((loan, index) => {
+            {loans.filter(loan => {
+              if (!searchTerm) return true;
+              const borrower = borrowers[loan.borrowerId];
+              return borrower?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                     borrower?.phone?.includes(searchTerm);
+            }).map((loan, index) => {
               const borrower = borrowers[loan.borrowerId];
               const progress = (loan.paidAmount / loan.totalAmount) * 100;
               const daysLeft = Math.ceil(
@@ -744,6 +763,18 @@ export const Collections: React.FC = () => {
                           : `${daysLeft} days left`}
                       </span>
                     </div>
+                    {borrower?.phone && (
+                      <a
+                        href={`https://wa.me/91${borrower.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${borrower?.name}, your loan payment of ₹${loan.remainingAmount.toLocaleString()} is due. Please make the payment at your earliest convenience. Thank you.`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="mt-1 flex items-center space-x-1 text-xs text-green-600 hover:text-green-700 font-medium"
+                      >
+                        <span>📲</span>
+                        <span>Remind on WhatsApp</span>
+                      </a>
+                    )}
                   </div>
                 </motion.div>
               );

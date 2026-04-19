@@ -1389,54 +1389,49 @@ class DataService {
     const loans = await this.getLoans();
 
     let filteredLines = lines;
-
     if (role === 'agent') {
       filteredLines = lines.filter(l => l.agentId === userId);
     } else if (role === 'co-owner') {
       filteredLines = lines.filter(l => l.ownerId === userId || l.coOwnerId === userId);
     }
 
-    const lineCollections = await Promise.all(
-      filteredLines.map(async (line) => {
-        const lineLoans = loans.filter(l => l.lineId === line.id);
-        const loanIds = lineLoans.map(l => l.id);
+    // Get all loan IDs across all lines in one shot
+    const allLoanIds = loans
+      .filter(l => filteredLines.some(fl => fl.id === l.lineId))
+      .map(l => l.id);
 
-        if (loanIds.length === 0) {
-          return {
-            lineId: line.id,
-            lineName: line.name,
-            totalCollected: 0,
-            totalDisbursed: line.totalDisbursed,
-            collectionEfficiency: 0,
-            activeLoans: 0
-          };
-        }
+    // Single payment query for all lines at once
+    let paymentsByLoan: Record<string, number> = {};
+    if (allLoanIds.length > 0) {
+      const { data: paymentsData } = await supabase
+        .from('payments')
+        .select('loan_id, amount')
+        .in('loan_id', allLoanIds);
 
-        const { data: paymentsData } = await supabase
-          .from('payments')
-          .select('amount')
-          .in('loan_id', loanIds);
+      (paymentsData || []).forEach(p => {
+        paymentsByLoan[p.loan_id] = (paymentsByLoan[p.loan_id] || 0) + Number(p.amount);
+      });
+    }
 
-        const totalCollected = (paymentsData || []).reduce((sum, p) => sum + Number(p.amount), 0);
-        const activeLoans = lineLoans.filter(l => l.status === 'active').length;
-        const collectionEfficiency = line.totalDisbursed > 0
-          ? Math.round((totalCollected / line.totalDisbursed) * 100)
-          : 0;
+    return filteredLines.map(line => {
+      const lineLoans = loans.filter(l => l.lineId === line.id);
+      const totalCollected = lineLoans.reduce((sum, l) => sum + (paymentsByLoan[l.id] || 0), 0);
+      const activeLoans = lineLoans.filter(l => l.status === 'active').length;
+      const collectionEfficiency = line.totalDisbursed > 0
+        ? Math.round((totalCollected / line.totalDisbursed) * 100)
+        : 0;
 
-        return {
-          lineId: line.id,
-          lineName: line.name,
-          totalCollected,
-          totalDisbursed: line.totalDisbursed,
-          collectionEfficiency,
-          activeLoans,
-          initialCapital: line.initialCapital,
-          currentBalance: line.currentBalance
-        };
-      })
-    );
-
-    return lineCollections;
+      return {
+        lineId: line.id,
+        lineName: line.name,
+        totalCollected,
+        totalDisbursed: line.totalDisbursed,
+        collectionEfficiency,
+        activeLoans,
+        initialCapital: line.initialCapital,
+        currentBalance: line.currentBalance
+      };
+    });
   }
 
   async getExpenseCategories(): Promise<any[]> {
@@ -1950,20 +1945,54 @@ class DataService {
   }
 
   async bulkCreateBorrowers(borrowers: Partial<Borrower>[]): Promise<{ success: Borrower[], failed: { data: Partial<Borrower>, error: string }[] }> {
-    const results: Borrower[] = [];
+    const { data: { user } } = await supabase.auth.getUser();
     const failures: { data: Partial<Borrower>, error: string }[] = [];
 
-    for (const borrower of borrowers) {
-      try {
-        const created = await this.createBorrower(borrower);
-        results.push(created);
-      } catch (error: any) {
-        failures.push({
-          data: borrower,
-          error: error.message || 'Unknown error'
-        });
+    // Batch insert all at once instead of sequential one-by-one
+    const insertRows = borrowers.map(b => ({
+      serial_number: b.serialNumber,
+      name: b.name,
+      phone: b.phone,
+      address: b.address || '',
+      line_id: b.lineId,
+      agent_id: b.agentId || user?.id
+    }));
+
+    const { data, error } = await supabase
+      .from('borrowers')
+      .insert(insertRows)
+      .select();
+
+    if (error) {
+      // If batch fails, fall back to individual inserts to isolate failures
+      const results: Borrower[] = [];
+      for (const borrower of borrowers) {
+        try {
+          const created = await this.createBorrower(borrower);
+          results.push(created);
+        } catch (err: any) {
+          failures.push({ data: borrower, error: err.message || 'Unknown error' });
+        }
       }
+      return { success: results, failed: failures };
     }
+
+    const results: Borrower[] = (data || []).map(d => ({
+      id: d.id,
+      serialNumber: d.serial_number,
+      name: d.name,
+      phone: d.phone,
+      address: d.address,
+      geolocation: d.geolocation,
+      isHighRisk: d.is_high_risk,
+      isDefaulter: d.is_defaulter,
+      totalLoans: d.total_loans || 0,
+      activeLoans: d.active_loans || 0,
+      totalRepaid: Number(d.total_repaid || 0),
+      lineId: d.line_id,
+      agentId: d.agent_id,
+      createdAt: new Date(d.created_at)
+    }));
 
     return { success: results, failed: failures };
   }

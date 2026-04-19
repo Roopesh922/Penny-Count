@@ -17,14 +17,13 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { dataService } from '../../services/dataService';
 import { supabase } from '../../lib/supabase';
 
-// lightweight feedback fallback
-const notify = (msg: string) => { try { window.alert(msg); } catch {} };
-
 export const Settings: React.FC = () => {
   const { user, logout } = useAuth();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('profile');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -129,12 +128,12 @@ export const Settings: React.FC = () => {
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmation !== 'DELETE') {
-      notify('Please type DELETE to confirm account deletion');
+      showToast('Please type DELETE to confirm account deletion', 'success');
       return;
     }
 
     if (!profile?.id && !user?.id) {
-      notify('Unable to delete account: User ID not found');
+      showToast('Unable to delete account: User ID not found', 'success');
       return;
     }
 
@@ -158,7 +157,7 @@ export const Settings: React.FC = () => {
 
       // Clear local storage
       localStorage.clear();
-      notify('Account deleted successfully');
+      showToast('Account deleted successfully', 'success');
 
       // Redirect to login
       setTimeout(() => {
@@ -273,7 +272,7 @@ export const Settings: React.FC = () => {
                   localStorage.setItem('penny-count-user', JSON.stringify(merged));
                 }
               } catch {}
-              notify('Profile updated');
+              showToast('Profile updated', 'success');
             } catch (err: any) {
               notify(err.message || 'Failed to update profile');
             } finally {
@@ -416,12 +415,12 @@ export const Settings: React.FC = () => {
         </div>
         <div>
           <motion.button onClick={async () => {
-            if (!profile) return notify('No profile loaded');
-            if (passwords.newPassword !== passwords.confirm) return notify('Passwords do not match');
+            if (!profile) return showToast('No profile loaded', 'success');
+            if (passwords.newPassword !== passwords.confirm) return showToast('Passwords do not match', 'success');
             setSaving(true);
             try {
               await dataService.updateUser(profile.id || profile._id, ({ password: passwords.newPassword } as any));
-              notify('Password changed');
+              showToast('Password changed', 'success');
               setPasswords({ current: '', newPassword: '', confirm: '' });
             } catch (err: any) { notify(err.message || 'Failed to change password'); }
             setSaving(false);
