@@ -34,6 +34,16 @@ const AppContent: React.FC = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Allow child components to navigate by dispatching a custom event
+  React.useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      const section = e.detail?.section || e.detail;
+      if (typeof section === 'string') setActiveSection(section);
+    };
+    window.addEventListener('navigate', handler as EventListener);
+    return () => window.removeEventListener('navigate', handler as EventListener);
+  }, []);
+
   // Check if we're on the password reset page
   const isResetPasswordPage = window.location.pathname === '/reset-password' || window.location.hash.includes('type=recovery');
 

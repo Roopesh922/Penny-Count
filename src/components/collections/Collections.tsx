@@ -683,8 +683,15 @@ export const Collections: React.FC = () => {
         {loans.length === 0 ? (
           <div className="text-center py-12">
             <DollarSign className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 text-lg font-medium">No active loans</p>
-            <p className="text-gray-400 text-sm mt-2">Active loans will appear here</p>
+            <p className="text-gray-700 text-lg font-semibold">No active loans</p>
+            <p className="text-gray-400 text-sm mt-1 mb-5">Loans you disburse will appear here for collection tracking</p>
+            <a
+              href="#"
+              onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent('navigate', { detail: 'loans' })); }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 transition-colors"
+            >
+              <span>+ Disburse a Loan</span>
+            </a>
           </div>
         ) : (
           <div className="space-y-4">
